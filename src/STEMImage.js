@@ -35,7 +35,8 @@ class STEMImage extends Component {
     this.imageData.setOrigin(0, 0, 0);
     this.imageData.setSpacing(1, 1, 1);
     this.imageData.setDimensions(160, 160, 1);
-    this.actor = vtk.Rendering.Core.vtkActor2D.newInstance();
+    ;
+    this.actor = vtk.Rendering.Core.vtkImageSlice.newInstance();
     this.mapper = vtk.Rendering.Core.vtkImageMapper.newInstance();
     this.mapper.setInputData(this.imageData);
     this.actor.setMapper(this.mapper);
@@ -46,9 +47,9 @@ class STEMImage extends Component {
   
   render() {
     const {data} = this.props;
-    //if (data) {
-    //  this.dataArray.setData(data);      
-    //}
+    if (data) {
+      this.dataArray.setData(data);      
+    }
     this.renderer.resetCamera();
     this.renderWindow.render();                     
     return (<div ref={this.renderWindowContainer}  className="render-window-container">
