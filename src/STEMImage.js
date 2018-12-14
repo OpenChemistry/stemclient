@@ -9,7 +9,7 @@ const minMax = (data) => {
       {
           min = data[i];
       }
-      if(data[i] >= max)
+      if(data[i] > max)
       {
           max = data[i];
       }
