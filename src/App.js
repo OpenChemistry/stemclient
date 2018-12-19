@@ -16,7 +16,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.socket = openSocket('http://localhost:5000/stem');
+    this.socket = openSocket('http://localhost:5000/stem', {transports: ['websocket']});
 
 
     this.socket.on('connect', (socket) => {
