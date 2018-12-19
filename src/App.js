@@ -16,12 +16,15 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.socket = openSocket('http://localhost:5000/stem');
-    this.socket.on('connect', () => {
-      console.log('Connected');
+    this.socket = openSocket('http://localhost:5000/stem', {transports: ['websocket']});
+
+
+    this.socket.on('connect', (socket) => {
+      this.socket.emit('subscribe', 'bright');
+
     });
 
-    this.socket.on('stem', (msg) => {
+    this.socket.on('stem.bright', (msg) => {
       const stemData = new Float64Array(msg.data);
 
       // Aggregate the values
