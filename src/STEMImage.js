@@ -62,7 +62,10 @@ class STEMImage extends Component {
       const ctx = this.renderWindowContainer.current.getContext('2d');
       ctx.putImageData(imageData, 0, 0);
     }
-    return (<canvas width='160' height='160' ref={this.renderWindowContainer}  className="render-window-container">
+    const style = {
+      width: '45%'
+    };
+    return (<canvas style={style} width='160' height='160' ref={this.renderWindowContainer}  className="render-window-container">
             </canvas>
     );
   }
