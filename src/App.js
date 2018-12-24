@@ -5,13 +5,10 @@ import './App.css';
 import STEMImage from './STEMImage.js'
 import openSocket from 'socket.io-client';
 
-const NUMBER_OF_PIXELS = 160*160;
-
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {};
-    this.stemData = new Float64Array(NUMBER_OF_PIXELS);
     this.images = 1;
   }
 
@@ -25,16 +22,17 @@ class App extends Component {
     });
 
     this.socket.on('stem.bright', (msg) => {
-      const stemData = new Float64Array(msg.data);
+      const pixelValues = new Float64Array(msg.data.values);
+      const pixelIndexes = new Uint32Array(msg.data.indexes);
 
       // Aggregate the values
-      for(let i=0; i<NUMBER_OF_PIXELS; i++) {
-        this.stemData[i] += stemData[i];
+      for(let i=0; i<pixelValues.length; i++) {
+        this.stemData[pixelIndexes[i]] = pixelValues[i];
       }
 
       // Once we have aggregated all the values set the state so the STEMImage
       // gets generated.
-      if (this.images == 32) {
+      if (this.images === 32) {
         this.setState({
           data: this.stemData
         });
@@ -42,12 +40,26 @@ class App extends Component {
 
       this.images +=1;
     })
+
+    this.socket.on('stem.size', (msg) => {
+      const {width, height}  = msg;
+      if (width !== this.state.width || height !== this.state.height) {
+        this.stemData = new Float64Array(width*height);
+        this.setState({
+          width,
+          height
+        });
+      }
+    });
   }
 
   render() {
     return (
       <div className="App">
-        <STEMImage data={this.state.data} />
+        <STEMImage
+          data={this.state.data}
+          width={this.state.width}
+          height={this.state.height} />
       </div>
     );
   }
