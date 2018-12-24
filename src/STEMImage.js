@@ -54,7 +54,7 @@ class STEMImage extends Component {
   }
 
   render() {
-    const {data} = this.props;
+    const {data, width, height} = this.props;
     if (data) {
       const values = new Float64Array(data);
       const pixels = this.dataToPixels(values);
@@ -65,7 +65,9 @@ class STEMImage extends Component {
     const style = {
       width: '45%'
     };
-    return (<canvas style={style} width='160' height='160' ref={this.renderWindowContainer}  className="render-window-container">
+    return (<canvas
+              style={style}  width={width} height={height}
+              ref={this.renderWindowContainer}  className="render-window-container">
             </canvas>
     );
   }
