@@ -58,7 +58,7 @@ class STEMImage extends Component {
     if (data) {
       const values = new Float64Array(data);
       const pixels = this.dataToPixels(values);
-      const imageData = new ImageData(pixels, 160);
+      const imageData = new ImageData(pixels, width);
       const ctx = this.renderWindowContainer.current.getContext('2d');
       ctx.putImageData(imageData, 0, 0);
     }
