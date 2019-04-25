@@ -1,4 +1,9 @@
-import { ImageSize, DataRange, ImageDataChunk, ImageSourceEvent, ImageSourceEventHandler } from './types';
+import openSocket from 'socket.io-client';
+import {
+  ImageSize, DataRange, ImageDataChunk,
+  ImageSourceEvent, ImageSourceEventHandler,
+  StreamSourceOptions
+} from './types';
 
 export interface ImageDataSource {
   getImageSize: () => ImageSize;
@@ -78,6 +83,57 @@ export class BaseImageDataSource {
 }
 
 export class StreamImageDataSource extends BaseImageDataSource implements ImageDataSource {
+  socket: any = null;
+
+  connect(options: StreamSourceOptions) : [Promise<{}>, Promise<{}>] {
+    this.disconnect();
+
+    const {url, room, sizeEvent, dataEvent} = options;
+    const socket = openSocket(url, {transports: ['websocket']});
+
+    const connectPromise = new Promise((resolve, reject) => {
+      socket.on('connect', () => {
+        socket.emit('subscribe', room);
+        resolve();
+      });
+    });
+
+    const disconnectPromise = new Promise((resolve, reject) => {
+      socket.on('disconnect', () => {
+        socket.destroy();
+        resolve();
+      });
+    });
+
+    socket.on(sizeEvent, (msg: any) => {
+      let {width, height} = msg;
+      width = parseInt(width);
+      height = parseInt(height);
+      this.setImageSize({width, height});
+    });
+
+    socket.on(dataEvent, (msg: any) => {
+      let {values, indexes} = msg.data;
+      values = new Float64Array(values);
+      indexes = new Uint32Array(indexes);
+      this.updateImageChunk({indexes, values});
+    });
+
+    socket.on('error', (msg: any) => {
+      console.log("SOCKET ERROR", msg);
+    });
+
+    this.socket = socket;
+
+    return [connectPromise, disconnectPromise];
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+
   setImageSize(size: ImageSize) {
     const {width, height} = size;
     if (width !== this.size.width || height !== this.size.height) {

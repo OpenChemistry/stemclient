@@ -1,8 +1,8 @@
 import React, { Component, Fragment } from 'react';
 
-import openSocket from 'socket.io-client';
 import { StreamImageDataSource } from '../../stem-image/data';
 import STEMImage from '../../components/stem-image';
+import { StreamSourceOptions } from '../../stem-image/types';
 
 interface Props {
 }
@@ -31,20 +31,25 @@ export default class LivePreviewContainer extends Component<Props> {
 
     const {serverUrl} = this.state;
 
-    const socket = openSocket(serverUrl, {transports: ['websocket']});
+    const options: StreamSourceOptions = {
+      url: serverUrl,
+      room: 'bright',
+      sizeEvent: 'stem.size',
+      dataEvent: 'stem.bright'
+    }
 
-    socket.on('connect', () => {
-      socket.emit('subscribe', 'bright');
+    const [connected, disconnected] = this.dataSource.connect(options);
+
+    connected.then(() => {
       this.setState((state: State) => {
         state.connected = true;
         state.connecting = false;
-        state.socket = socket;
+        state.socket = null;
         return state;
       });
     });
 
-    socket.on('disconnect', () => {
-      socket.destroy();
+    disconnected.then(() => {
       this.setState((state: State) => {
         state.connected = false;
         state.connecting = false;
@@ -52,31 +57,10 @@ export default class LivePreviewContainer extends Component<Props> {
         return state;
       });
     });
-
-    socket.on('stem.size', (msg: any) => {
-      let {width, height} = msg;
-      width = parseInt(width);
-      height = parseInt(height);
-      this.dataSource.setImageSize({width, height});
-    });
-
-    socket.on('stem.bright', (msg: any) => {
-      let {values, indexes} = msg.data;
-      values = new Float64Array(values);
-      indexes = new Uint32Array(indexes);
-      this.dataSource.updateImageChunk({indexes, values});
-    });
-
-    socket.on('error', (msg: any) => {
-      console.log("SOCKET ERROR", msg);
-    });
   }
 
   stopPreview() {
-    const {socket} = this.state;
-    if (socket) {
-      socket.disconnect();
-    }
+    this.dataSource.disconnect();
   }
 
   render() {
