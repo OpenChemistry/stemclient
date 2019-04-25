@@ -4,14 +4,16 @@ import { MultiSubjectProducer, IObserver } from './subject';
 export class StreamConnection extends MultiSubjectProducer {
   socket: any = null;
 
-  connect(url: string, room: string) : [Promise<{}>, Promise<{}>] {
+  connect(url: string, rooms: string[]) : [Promise<{}>, Promise<{}>] {
     this.disconnect();
 
     const socket = openSocket(url, {transports: ['websocket']});
 
     const connectPromise = new Promise((resolve, _reject) => {
       socket.on('connect', () => {
-        socket.emit('subscribe', room);
+        for (let room of rooms) {
+          socket.emit('subscribe', room);
+        }
         this.reconnectSocketToSubjects(socket);
         resolve();
       });

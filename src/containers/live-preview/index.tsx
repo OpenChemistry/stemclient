@@ -38,9 +38,9 @@ export default class LivePreviewContainer extends Component<Props> {
     });
 
     const {serverUrl} = this.state;
-    const room = 'bright';
+    const rooms = ['bright'];
 
-    const [connected, disconnected] = this.connection.connect(serverUrl, room);
+    const [connected, disconnected] = this.connection.connect(serverUrl, rooms);
 
     connected.then(() => {
       this.setState((state: State) => {
