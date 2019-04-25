@@ -1,81 +1,105 @@
-import React from 'react';
+import React, { Component, Fragment } from 'react';
 
-import STEMImage from '../../components/stem-image'
 import openSocket from 'socket.io-client';
+import { StreamImageDataSource } from '../../stem-image/data';
+import STEMImage from '../../components/stem-image';
 
 interface Props {
-
 }
 
 interface State {
-  data?: Float64Array;
-  width?: number;
-  height?: number;
+  connected: boolean;
+  connecting: boolean;
+  socket: any;
+  serverUrl: string;
 }
 
-class App extends React.Component<Props, State> {
-  stemData: Float64Array = new Float64Array(1);
-  socket: any;
-  images: number = 1;
+export default class LivePreviewContainer extends Component<Props> {
   state: State = {
-    data: undefined,
-    width: undefined,
-    height: undefined
-  };
+    connected: false,
+    connecting: false,
+    socket: null,
+    serverUrl: `${window.origin}/stem`
+  }
+  dataSource = new StreamImageDataSource();
 
-  componentDidMount() {
-    const {hostname, protocol} = window.location;
-    this.socket = openSocket(`${protocol}//${hostname}:5000/stem`, {transports: ['websocket']});
-    // this.socket = openSocket(`${window.origin}/stem`, {transports: ['websocket']});
-
-    this.socket.on('connect', () => {
-      this.socket.emit('subscribe', 'bright');
+  startPreview() {
+    this.setState((state: State) => {
+      state.connecting = true;
+      return state;
     });
 
-    this.socket.on('stem.bright', (msg: any) => {
-      console.log('DATA');
-      const pixelValues = new Float64Array(msg.data.values);
-      const pixelIndexes = new Uint32Array(msg.data.indexes);
+    const {serverUrl} = this.state;
 
-      // Aggregate the values
-      for(let i=0; i<pixelValues.length; i++) {
-        this.stemData[pixelIndexes[i]] = pixelValues[i];
-      }
+    const socket = openSocket(serverUrl, {transports: ['websocket']});
 
-      // Once we have aggregated all the values set the state so the STEMImage
-      // gets generated.
-      if (this.images === 32) {
-        this.setState({
-          data: this.stemData
-        });
-      }
-
-      this.images +=1;
-    })
-
-    this.socket.on('stem.size', (msg: any) => {
-      console.log('SIZE');
-      const {width, height}  = msg;
-      if (width !== this.state.width || height !== this.state.height) {
-        this.stemData = new Float64Array(width*height);
-        this.setState({
-          width,
-          height
-        });
-      }
+    socket.on('connect', () => {
+      socket.emit('subscribe', 'bright');
+      this.setState((state: State) => {
+        state.connected = true;
+        state.connecting = false;
+        state.socket = socket;
+        return state;
+      });
     });
+
+    socket.on('disconnect', () => {
+      socket.destroy();
+      this.setState((state: State) => {
+        state.connected = false;
+        state.connecting = false;
+        state.socket = null;
+        return state;
+      });
+    });
+
+    socket.on('stem.size', (msg: any) => {
+      let {width, height} = msg;
+      width = parseInt(width);
+      height = parseInt(height);
+      this.dataSource.setImageSize({width, height});
+    });
+
+    socket.on('stem.bright', (msg: any) => {
+      let {values, indexes} = msg.data;
+      values = new Float64Array(values);
+      indexes = new Uint32Array(indexes);
+      this.dataSource.updateImageChunk({indexes, values});
+    });
+
+    socket.on('error', (msg: any) => {
+      console.log("SOCKET ERROR", msg);
+    });
+  }
+
+  stopPreview() {
+    const {socket} = this.state;
+    if (socket) {
+      socket.disconnect();
+    }
   }
 
   render() {
+    const {connected, connecting, serverUrl} = this.state;
     return (
-      <div className="App">
-        <STEMImage
-          data={this.state.data}
-          width={this.state.width}
-          height={this.state.height} />
-      </div>
-    );
+      <Fragment>
+        <input
+          disabled={connected || connecting}
+          value={serverUrl}
+          onChange={(e) => {this.setState({serverUrl: e.target.value})}}
+        />
+        <button
+          onClick={() => {connected ? this.stopPreview() : this.startPreview()}}
+          disabled={connecting}
+        >
+          {connected ? 'Stop' : 'Start'}
+        </button>
+        {connected &&
+        <div style={{width: '50%'}}>
+          <STEMImage source={this.dataSource}/>
+        </div>
+        }
+      </Fragment>
+    )
   }
 }
-
-export default App;
