@@ -1,5 +1,5 @@
 import { ImageDataSource } from './data';
-import { ImageSourceEvent, Vec2 } from './types';
+import { Vec2 } from './types';
 
 const linearScale = (domain: Vec2, range: Vec2) : (value: number) => number => {
   const [d0, d1] = domain;
@@ -24,25 +24,23 @@ export class ImageView {
     this.imageData = new ImageData(1, 1);
     this.resize();
     this.draw();
-    this.onSourceModified = this.onSourceModified.bind(this);
-    this.source.subscribe(this.onSourceModified);
+    this.sizeObserver = this.sizeObserver.bind(this);
+    this.dataObserver = this.dataObserver.bind(this);
+    this.source.subscribe('sizeChanged', this.sizeObserver);
+    this.source.subscribe('dataChanged', this.dataObserver);
   }
 
   unsubscribe() {
-    this.source.unsubscribe(this.onSourceModified);
+    this.source.unsubscribe('sizeChanged', this.sizeObserver);
+    this.source.unsubscribe('dataChanged', this.dataObserver);
   }
 
-  onSourceModified(event: ImageSourceEvent) {
-    switch (event) {
-      case 'dataChanged': {
-        this.draw();
-        break;
-      }
-      case 'sizeChanged': {
-        this.resize();
-        break;
-      }
-    }
+  sizeObserver() {
+    this.resize();
+  }
+
+  dataObserver() {
+    this.draw();
   }
 
   resize() {

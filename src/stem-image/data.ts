@@ -1,32 +1,32 @@
 import {
   ImageSize, DataRange, ImageDataChunk,
-  ImageSourceEvent, ImageSourceEventHandler,
+  ImageSourceEvent
 } from './types';
 import { StreamConnection } from './connection';
+import { MultiSubject, IObserver } from './subject';
 
 export interface ImageDataSource {
   getImageSize: () => ImageSize;
   getDataRange: () => DataRange;
   getImageData: () => Float64Array;
   getPixelData: (i: number, j: number) => number;
-  subscribe: (fn: ImageSourceEventHandler) => any;
-  unsubscribe: (fn: ImageSourceEventHandler) => any;
+  subscribe: (event: ImageSourceEvent, observer: IObserver) => any;
+  unsubscribe: (event: ImageSourceEvent, observer: IObserver) => any;
 }
 
-export class BaseImageDataSource {
+export class BaseImageDataSource extends MultiSubject {
   data: Float64Array;
   size: ImageSize;
   range: DataRange;
-  observers: ImageSourceEventHandler[];
 
   constructor() {
     if (new.target === BaseImageDataSource) {
       throw new TypeError("Cannot instantiate the abstract class BaseImageDataSource");
     }
+    super();
     this.data = new Float64Array([0]);
     this.size = {width: 1, height: 1};
     this.range = {min: 0, max: 0};
-    this.observers = [];
   }
 
   getImageSize() : ImageSize {
@@ -51,18 +51,6 @@ export class BaseImageDataSource {
       return 0.0;
     }
     return this.data[idx];
-  }
-
-  subscribe(fn: ImageSourceEventHandler) {
-    this.observers.push(fn);
-  }
-
-  unsubscribe(fn: ImageSourceEventHandler) {
-    this.observers = this.observers.filter(observer => observer !== fn);
-  }
-
-  protected emit(event: ImageSourceEvent) {
-    this.observers.forEach((observer) => {observer(event)});
   }
 
   protected updateRange() {
@@ -128,7 +116,7 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     if (width !== this.size.width || height !== this.size.height) {
       this.data = new Float64Array(width * height);
       this.size = size;
-      this.emit('sizeChanged');
+      this.emit('sizeChanged', null);
     }
   }
 
@@ -148,6 +136,6 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     }
 
     this.updateRange();
-    this.emit('dataChanged');
+    this.emit('dataChanged', null);
   }
 }
