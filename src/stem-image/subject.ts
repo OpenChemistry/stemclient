@@ -18,7 +18,7 @@ export class Subject {
   }
 }
 
-export class MultiSubject {
+export class MultiSubjectProducer {
   subjects: {[eventName: string]: Subject} = {};
 
   subscribe(event: string, observer: IObserver) {

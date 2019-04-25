@@ -1,7 +1,7 @@
 import openSocket from 'socket.io-client';
-import { MultiSubject, IObserver } from './subject';
+import { MultiSubjectProducer, IObserver } from './subject';
 
-export class StreamConnection extends MultiSubject {
+export class StreamConnection extends MultiSubjectProducer {
   socket: any = null;
 
   connect(url: string, room: string) : [Promise<{}>, Promise<{}>] {

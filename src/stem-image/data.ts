@@ -3,7 +3,7 @@ import {
   ImageSourceEvent
 } from './types';
 import { StreamConnection } from './connection';
-import { MultiSubject, IObserver } from './subject';
+import { MultiSubjectProducer, IObserver } from './subject';
 
 export interface ImageDataSource {
   getImageSize: () => ImageSize;
@@ -14,7 +14,7 @@ export interface ImageDataSource {
   unsubscribe: (event: ImageSourceEvent, observer: IObserver) => any;
 }
 
-export class BaseImageDataSource extends MultiSubject {
+export class BaseImageDataSource extends MultiSubjectProducer {
   data: Float64Array;
   size: ImageSize;
   range: DataRange;
