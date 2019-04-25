@@ -1,27 +1,39 @@
-import React, { Component } from 'react';
-import './App.css';
+import React from 'react';
 
-
-import STEMImage from './STEMImage.js'
+import STEMImage from '../../components/stem-image'
 import openSocket from 'socket.io-client';
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this.images = 1;
-  }
+interface Props {
+
+}
+
+interface State {
+  data?: Float64Array;
+  width?: number;
+  height?: number;
+}
+
+class App extends React.Component<Props, State> {
+  stemData: Float64Array = new Float64Array(1);
+  socket: any;
+  images: number = 1;
+  state: State = {
+    data: undefined,
+    width: undefined,
+    height: undefined
+  };
 
   componentDidMount() {
-    this.socket = openSocket(`${window.origin}/stem`, {transports: ['websocket']});
+    const {hostname, protocol} = window.location;
+    this.socket = openSocket(`${protocol}//${hostname}:5000/stem`, {transports: ['websocket']});
+    // this.socket = openSocket(`${window.origin}/stem`, {transports: ['websocket']});
 
-
-    this.socket.on('connect', (socket) => {
+    this.socket.on('connect', () => {
       this.socket.emit('subscribe', 'bright');
-
     });
 
-    this.socket.on('stem.bright', (msg) => {
+    this.socket.on('stem.bright', (msg: any) => {
+      console.log('DATA');
       const pixelValues = new Float64Array(msg.data.values);
       const pixelIndexes = new Uint32Array(msg.data.indexes);
 
@@ -41,7 +53,8 @@ class App extends Component {
       this.images +=1;
     })
 
-    this.socket.on('stem.size', (msg) => {
+    this.socket.on('stem.size', (msg: any) => {
+      console.log('SIZE');
       const {width, height}  = msg;
       if (width !== this.state.width || height !== this.state.height) {
         this.stemData = new Float64Array(width*height);

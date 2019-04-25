@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
-import './STEMImage.css';
+import React from 'react';
 
-const minMax = (data) => {
+type Vec2 = [number, number];
+
+const minMax = (data: Float64Array) : Vec2 => {
   let min = data[0], max = data[0];
   for(let i = 0; i < data.length; i++)
   {
@@ -18,26 +19,28 @@ const minMax = (data) => {
   return [min, max];
 };
 
-const linearScale = (inRange, outRange) => {
+const linearScale = (inRange: Vec2, outRange: Vec2) : (value: number) => number => {
   const iStart = inRange[0],
         iEnd  = inRange[1],
         oStart = outRange[0],
         oEnd  = outRange[1];
 
-  return (value) => {
+  return (value:number) : number => {
     return oStart + (oEnd - oStart) * ((value - iStart) / (iEnd - iStart));
   }
 };
 
+interface Props {
+  data?: Float64Array;
+  pixels?: Uint32Array;
+  width?: number;
+  height?: number;
+}
 
-class STEMImage extends Component {
+class STEMImage extends React.Component<Props> {
+  private renderWindowContainer = React.createRef<HTMLCanvasElement>();
 
-  constructor(props) {
-    super(props);
-    this.renderWindowContainer  = React.createRef();
-  }
-
-  dataToPixels(data) {
+  dataToPixels(data: Float64Array) : Uint8ClampedArray {
     const [min, max] = minMax(data);
     const pixels =  new Uint8ClampedArray(data.length*4)
     const scale = linearScale([min, max], [0, 255]);
@@ -58,8 +61,8 @@ class STEMImage extends Component {
     if (data) {
       const values = new Float64Array(data);
       const pixels = this.dataToPixels(values);
-      const imageData = new ImageData(pixels, width);
-      const ctx = this.renderWindowContainer.current.getContext('2d');
+      const imageData = new ImageData(pixels as any, width as any);
+      const ctx = this.renderWindowContainer.current!.getContext('2d')!;
       ctx.putImageData(imageData, 0, 0);
     }
     const style = {
