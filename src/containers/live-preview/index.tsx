@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 
 import { StreamImageDataSource } from '../../stem-image/data';
 import STEMImage from '../../components/stem-image';
-import { StreamSourceOptions } from '../../stem-image/types';
+import { StreamConnection } from '../../stem-image/connection';
 
 interface Props {
 }
@@ -21,7 +21,15 @@ export default class LivePreviewContainer extends Component<Props> {
     socket: null,
     serverUrl: `${window.origin}/stem`
   }
-  dataSource = new StreamImageDataSource();
+  connection: StreamConnection;
+  dataSource: StreamImageDataSource;
+
+  constructor(props: Props) {
+    super(props);
+    this.connection = new StreamConnection();
+    this.dataSource = new StreamImageDataSource();
+    this.dataSource.setConnection(this.connection, 'stem.size', 'stem.bright');
+  }
 
   startPreview() {
     this.setState((state: State) => {
@@ -30,15 +38,9 @@ export default class LivePreviewContainer extends Component<Props> {
     });
 
     const {serverUrl} = this.state;
+    const room = 'bright';
 
-    const options: StreamSourceOptions = {
-      url: serverUrl,
-      room: 'bright',
-      sizeEvent: 'stem.size',
-      dataEvent: 'stem.bright'
-    }
-
-    const [connected, disconnected] = this.dataSource.connect(options);
+    const [connected, disconnected] = this.connection.connect(serverUrl, room);
 
     connected.then(() => {
       this.setState((state: State) => {
@@ -60,7 +62,7 @@ export default class LivePreviewContainer extends Component<Props> {
   }
 
   stopPreview() {
-    this.dataSource.disconnect();
+    this.connection.disconnect();
   }
 
   render() {

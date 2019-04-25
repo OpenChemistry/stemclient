@@ -24,7 +24,7 @@ export class ImageView {
     this.imageData = new ImageData(1, 1);
     this.resize();
     this.draw();
-    this.onSourceModified = this.onSourceModified.bind(this)
+    this.onSourceModified = this.onSourceModified.bind(this);
     this.source.subscribe(this.onSourceModified);
   }
 
