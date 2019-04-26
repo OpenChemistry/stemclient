@@ -3,6 +3,7 @@ import React, { Component, Fragment } from 'react';
 import { StreamImageDataSource } from '../../stem-image/data';
 import STEMImage from '../../components/stem-image';
 import { StreamConnection } from '../../stem-image/connection';
+import { blackWhite, viridis } from '../../stem-image/colors';
 
 interface Props {
 }
@@ -85,11 +86,17 @@ export default class LivePreviewContainer extends Component<Props> {
         </button>
         {connected &&
         <div style={{display: 'flex'}}>
-          <div style={{width: '50%'}}>
-            <STEMImage source={this.brightSource}/>
+          <div style={{width: '25%'}}>
+            <STEMImage source={this.brightSource} colorMap={blackWhite}/>
           </div>
-          <div style={{width: '50%'}}>
-            <STEMImage source={this.darkSource}/>
+          <div style={{width: '25%'}}>
+            <STEMImage source={this.brightSource} colorMap={viridis}/>
+          </div>
+          <div style={{width: '25%'}}>
+            <STEMImage source={this.darkSource} colorMap={blackWhite}/>
+          </div>
+          <div style={{width: '25%'}}>
+            <STEMImage source={this.darkSource} colorMap={viridis}/>
           </div>
         </div>
         }
