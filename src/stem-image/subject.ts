@@ -2,7 +2,7 @@ export interface IObserver{
   (message: any): void;
 }
 
-export class Subject {
+export class SubjectProducer {
   observers: IObserver[] = [];
 
   subscribe(observer: IObserver){
@@ -19,11 +19,11 @@ export class Subject {
 }
 
 export class MultiSubjectProducer {
-  subjects: {[eventName: string]: Subject} = {};
+  subjects: {[eventName: string]: SubjectProducer} = {};
 
   subscribe(event: string, observer: IObserver) {
     if (!(event in this.subjects)) {
-      this.subjects[event] = new Subject();
+      this.subjects[event] = new SubjectProducer();
     }
     this.subjects[event].subscribe(observer);
   }
