@@ -1,79 +1,29 @@
 import React from 'react';
-
-type Vec2 = [number, number];
-
-const minMax = (data: Float64Array) : Vec2 => {
-  let min = data[0], max = data[0];
-  for(let i = 0; i < data.length; i++)
-  {
-      if(data[i] < min)
-      {
-          min = data[i];
-      }
-      if(data[i] > max)
-      {
-          max = data[i];
-      }
-  }
-
-  return [min, max];
-};
-
-const linearScale = (inRange: Vec2, outRange: Vec2) : (value: number) => number => {
-  const iStart = inRange[0],
-        iEnd  = inRange[1],
-        oStart = outRange[0],
-        oEnd  = outRange[1];
-
-  return (value:number) : number => {
-    return oStart + (oEnd - oStart) * ((value - iStart) / (iEnd - iStart));
-  }
-};
+import { ImageDataSource } from '../../stem-image/data';
+import { ImageView } from '../../stem-image/view';
 
 interface Props {
-  data?: Float64Array;
-  pixels?: Uint32Array;
-  width?: number;
-  height?: number;
+  source: ImageDataSource;
 }
 
-class STEMImage extends React.Component<Props> {
-  private renderWindowContainer = React.createRef<HTMLCanvasElement>();
+export default class STEMImage extends React.Component<Props> {
+  private containerRef = React.createRef<HTMLDivElement>();
+  private imageView : ImageView | null = null;
 
-  dataToPixels(data: Float64Array) : Uint8ClampedArray {
-    const [min, max] = minMax(data);
-    const pixels =  new Uint8ClampedArray(data.length*4)
-    const scale = linearScale([min, max], [0, 255]);
+  componentDidMount() {
+    const { source } = this.props;
+    this.imageView = new ImageView(this.containerRef.current!, source);
+  }
 
-    for(let i=0; i< data.length; i++) {
-      const value = scale(data[i])
-      pixels[i*4 + 0] = value;
-      pixels[i*4 + 1] = value;
-      pixels[i*4 + 2] = value;
-      pixels[i*4 + 3] = 255;
+  componentWillUnmount() {
+    if (this.imageView) {
+      this.imageView.unsubscribe();
     }
-
-    return pixels;
   }
 
   render() {
-    const {data, width, height} = this.props;
-    if (data) {
-      const values = new Float64Array(data);
-      const pixels = this.dataToPixels(values);
-      const imageData = new ImageData(pixels as any, width as any);
-      const ctx = this.renderWindowContainer.current!.getContext('2d')!;
-      ctx.putImageData(imageData, 0, 0);
-    }
-    const style = {
-      width: '45%'
-    };
-    return (<canvas
-              style={style}  width={width} height={height}
-              ref={this.renderWindowContainer}  className="render-window-container">
-            </canvas>
-    );
+    return (
+      <div style={{width: '100%'}} ref={this.containerRef}></div>
+    )
   }
 }
-
-export default STEMImage;

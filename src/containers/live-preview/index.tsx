@@ -1,81 +1,99 @@
-import React from 'react';
+import React, { Component, Fragment } from 'react';
 
-import STEMImage from '../../components/stem-image'
-import openSocket from 'socket.io-client';
+import { StreamImageDataSource } from '../../stem-image/data';
+import STEMImage from '../../components/stem-image';
+import { StreamConnection } from '../../stem-image/connection';
 
 interface Props {
-
 }
 
 interface State {
-  data?: Float64Array;
-  width?: number;
-  height?: number;
+  connected: boolean;
+  connecting: boolean;
+  socket: any;
+  serverUrl: string;
 }
 
-class App extends React.Component<Props, State> {
-  stemData: Float64Array = new Float64Array(1);
-  socket: any;
-  images: number = 1;
+export default class LivePreviewContainer extends Component<Props> {
   state: State = {
-    data: undefined,
-    width: undefined,
-    height: undefined
-  };
+    connected: false,
+    connecting: false,
+    socket: null,
+    serverUrl: `${window.origin}/stem`
+  }
+  connection: StreamConnection;
+  brightSource: StreamImageDataSource;
+  darkSource: StreamImageDataSource;
 
-  componentDidMount() {
-    const {hostname, protocol} = window.location;
-    this.socket = openSocket(`${protocol}//${hostname}:5000/stem`, {transports: ['websocket']});
-    // this.socket = openSocket(`${window.origin}/stem`, {transports: ['websocket']});
+  constructor(props: Props) {
+    super(props);
+    this.connection = new StreamConnection();
+    this.brightSource = new StreamImageDataSource();
+    this.brightSource.setConnection(this.connection, 'stem.size', 'stem.bright');
+    this.darkSource = new StreamImageDataSource();
+    this.darkSource.setConnection(this.connection, 'stem.size', 'stem.dark');
+  }
 
-    this.socket.on('connect', () => {
-      this.socket.emit('subscribe', 'bright');
+  startPreview() {
+    this.setState((state: State) => {
+      state.connecting = true;
+      return state;
     });
 
-    this.socket.on('stem.bright', (msg: any) => {
-      console.log('DATA');
-      const pixelValues = new Float64Array(msg.data.values);
-      const pixelIndexes = new Uint32Array(msg.data.indexes);
+    const {serverUrl} = this.state;
+    const rooms = ['bright', 'dark'];
 
-      // Aggregate the values
-      for(let i=0; i<pixelValues.length; i++) {
-        this.stemData[pixelIndexes[i]] = pixelValues[i];
-      }
+    const [connected, disconnected] = this.connection.connect(serverUrl, rooms);
 
-      // Once we have aggregated all the values set the state so the STEMImage
-      // gets generated.
-      if (this.images === 32) {
-        this.setState({
-          data: this.stemData
-        });
-      }
-
-      this.images +=1;
-    })
-
-    this.socket.on('stem.size', (msg: any) => {
-      console.log('SIZE');
-      const {width, height}  = msg;
-      if (width !== this.state.width || height !== this.state.height) {
-        this.stemData = new Float64Array(width*height);
-        this.setState({
-          width,
-          height
-        });
-      }
+    connected.then(() => {
+      this.setState((state: State) => {
+        state.connected = true;
+        state.connecting = false;
+        state.socket = null;
+        return state;
+      });
     });
+
+    disconnected.then(() => {
+      this.setState((state: State) => {
+        state.connected = false;
+        state.connecting = false;
+        state.socket = null;
+        return state;
+      });
+    });
+  }
+
+  stopPreview() {
+    this.connection.disconnect();
   }
 
   render() {
+    const {connected, connecting, serverUrl} = this.state;
     return (
-      <div className="App">
-        <STEMImage
-          data={this.state.data}
-          width={this.state.width}
-          height={this.state.height} />
-      </div>
-    );
+      <Fragment>
+        <input
+          disabled={connected || connecting}
+          value={serverUrl}
+          onChange={(e) => {this.setState({serverUrl: e.target.value})}}
+        />
+        <button
+          onClick={() => {connected ? this.stopPreview() : this.startPreview()}}
+          disabled={connecting}
+        >
+          {connected ? 'Stop' : 'Start'}
+        </button>
+        {connected &&
+        <div style={{display: 'flex'}}>
+          <div style={{width: '50%'}}>
+            <STEMImage source={this.brightSource}/>
+          </div>
+          <div style={{width: '50%'}}>
+            <STEMImage source={this.darkSource}/>
+          </div>
+        </div>
+        }
+      </Fragment>
+    )
   }
 }
-
-export default App;
