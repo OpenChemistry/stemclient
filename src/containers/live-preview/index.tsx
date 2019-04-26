@@ -22,13 +22,16 @@ export default class LivePreviewContainer extends Component<Props> {
     serverUrl: `${window.origin}/stem`
   }
   connection: StreamConnection;
-  dataSource: StreamImageDataSource;
+  brightSource: StreamImageDataSource;
+  darkSource: StreamImageDataSource;
 
   constructor(props: Props) {
     super(props);
     this.connection = new StreamConnection();
-    this.dataSource = new StreamImageDataSource();
-    this.dataSource.setConnection(this.connection, 'stem.size', 'stem.bright');
+    this.brightSource = new StreamImageDataSource();
+    this.brightSource.setConnection(this.connection, 'stem.size', 'stem.bright');
+    this.darkSource = new StreamImageDataSource();
+    this.darkSource.setConnection(this.connection, 'stem.size', 'stem.dark');
   }
 
   startPreview() {
@@ -38,7 +41,7 @@ export default class LivePreviewContainer extends Component<Props> {
     });
 
     const {serverUrl} = this.state;
-    const rooms = ['bright'];
+    const rooms = ['bright', 'dark'];
 
     const [connected, disconnected] = this.connection.connect(serverUrl, rooms);
 
@@ -81,8 +84,13 @@ export default class LivePreviewContainer extends Component<Props> {
           {connected ? 'Stop' : 'Start'}
         </button>
         {connected &&
-        <div style={{width: '50%'}}>
-          <STEMImage source={this.dataSource}/>
+        <div style={{display: 'flex'}}>
+          <div style={{width: '50%'}}>
+            <STEMImage source={this.brightSource}/>
+          </div>
+          <div style={{width: '50%'}}>
+            <STEMImage source={this.darkSource}/>
+          </div>
         </div>
         }
       </Fragment>
