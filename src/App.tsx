@@ -7,7 +7,7 @@ import { ConnectedRouter } from 'connected-react-router'
 import { withStyles, createStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
-import { default as store, history } from './store';
+import { history } from './store';
 
 import { auth as authUI } from '@openchemistry/girder-ui';
 
@@ -60,9 +60,9 @@ const App : React.FC<Props> = (props) => {
           </Switch>
         </div>
       </ConnectedRouter>
-      <authUI.LoginOptions girder={development} store={store}/>
-      <authUI.GirderLogin store={store}/>
-      <authUI.OauthRedirect store={store}/>
+      <authUI.LoginOptions girder={development}/>
+      <authUI.GirderLogin/>
+      <authUI.OauthRedirect/>
     </div>
   );
 }

@@ -1,11 +1,9 @@
 import React from 'react';
 
 import { withStyles, createStyles, Theme, WithStyles } from '@material-ui/core';
-import { AppBar, Toolbar, Button, IconButton } from '@material-ui/core';
+import { AppBar, Toolbar, Button } from '@material-ui/core';
 
 import { auth as authUI } from '@openchemistry/girder-ui';
-
-import store from '../../store';
 
 const styles = (theme: Theme) => createStyles({
   logoImg: {
@@ -42,7 +40,7 @@ class Header extends React.Component<Props> {
           </Button>
           <div style={{flex: 1}}>
           </div>
-          { showMenu ? (loggedIn ? <authUI.UserMenu store={store}/> : <authUI.LoginButton  store={store}/>) : null }
+          { showMenu ? (loggedIn ? <authUI.UserMenu/> : <authUI.LoginButton/>) : null }
         </Toolbar>
       </AppBar>
     );

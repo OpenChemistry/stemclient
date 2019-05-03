@@ -3,6 +3,7 @@ import { createBrowserHistory } from 'history'
 import { connectRouter, routerMiddleware } from 'connected-react-router'
 import loggerMiddleware from 'redux-logger';
 import createSagaMiddleware from 'redux-saga';
+import { reducer as formReducer} from 'redux-form';
 import rootSaga from './sagas';
 
 // import * as reducers from './ducks';
@@ -14,7 +15,7 @@ export const history = createBrowserHistory({basename: process.env.PUBLIC_URL});
 const rootReducer = combineReducers({
   // ...reducers,
   auth: auth.reducer,
-  // form: formReducer,
+  form: formReducer,
   router: connectRouter(history)
 });
 
