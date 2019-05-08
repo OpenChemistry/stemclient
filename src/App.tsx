@@ -20,7 +20,6 @@ import Header from './containers/header';
 import LivePreview from './containers/live-preview';
 import PublicRoute from './containers/public-route';
 
-
 const styles = (_theme: Theme) => createStyles({
   root: {
     width: '100%',
@@ -52,6 +51,7 @@ const App : React.FC<Props> = (props) => {
   }
   return (
     <div className={classes.root}>
+      <CssBaseline/>
       <Header/>
       <ConnectedRouter history={history}>
         <div className={classes.content}>

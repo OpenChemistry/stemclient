@@ -15,7 +15,6 @@ interface Props extends WithStyles<typeof styles> {
   loggedIn: boolean;
   showMenu: boolean;
   onLogoClick: () => void;
-  onSearchClick: () => void;
   logo: string;
 };
 
@@ -24,12 +23,11 @@ class Header extends React.Component<Props> {
     loggedIn: false,
     showMenu: true,
     onLogoClick: () => {},
-    onSearchClick: () => {},
     logo: ''
   }
 
   render() {
-    const { loggedIn, showMenu, onLogoClick, onSearchClick, logo, classes } = this.props;
+    const { loggedIn, showMenu, onLogoClick, logo, classes } = this.props;
     return (
       <AppBar color="default" position="static">
         <Toolbar>
