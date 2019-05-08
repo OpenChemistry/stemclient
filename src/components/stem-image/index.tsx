@@ -1,11 +1,11 @@
 import React from 'react';
+import { RGBColor } from '@colormap/core';
 import { ImageDataSource } from '../../stem-image/data';
 import { ImageView } from '../../stem-image/view';
-import { Vec3 } from '../../stem-image/types';
 
 interface Props {
   source: ImageDataSource;
-  colorMap?: Vec3[];
+  colors?: RGBColor[];
 }
 
 export default class STEMImage extends React.Component<Props> {
@@ -19,8 +19,8 @@ export default class STEMImage extends React.Component<Props> {
   }
 
   componentWillUpdate(prevProps: Props) {
-    const { colorMap } = this.props;
-    if (colorMap !== prevProps.colorMap) {
+    const { colors } = this.props;
+    if (colors !== prevProps.colors) {
       this.updateColorMap();
     }
   }
@@ -32,9 +32,9 @@ export default class STEMImage extends React.Component<Props> {
   }
 
   updateColorMap() {
-    const { colorMap } = this.props;
-    if (this.imageView && colorMap) {
-      this.imageView.setColorMap(colorMap);
+    const { colors } = this.props;
+    if (this.imageView && colors) {
+      this.imageView.setColorMap(colors);
     }
   }
 

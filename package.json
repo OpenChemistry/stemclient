@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@colormap/core": "^0.1.0-3",
+    "@colormap/presets": "^0.1.0-4",
     "@material-ui/core": "^3.9.3",
     "@material-ui/icons": "^3.0.2",
     "@openchemistry/girder-redux": "^0.0.19",
