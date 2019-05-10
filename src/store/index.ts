@@ -6,18 +6,24 @@ import createSagaMiddleware from 'redux-saga';
 import { reducer as formReducer} from 'redux-form';
 import rootSaga from './sagas';
 
-// import * as reducers from './ducks';
+import reducers, {IStore as IStoreBase} from './ducks';
 
 import { auth } from '@openchemistry/girder-redux';
 
 export const history = createBrowserHistory({basename: process.env.PUBLIC_URL});
 
 const rootReducer = combineReducers({
-  // ...reducers,
+  ...reducers,
   auth: auth.reducer,
   form: formReducer,
   router: connectRouter(history)
 });
+
+export interface IStore extends IStoreBase {
+  auth: any;
+  form: any;
+  router: any;
+}
 
 const authSelector = (state: any) => state.auth;
 auth.selectors.setRoot(authSelector);
