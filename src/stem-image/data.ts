@@ -69,6 +69,23 @@ export class BaseImageDataSource extends MultiSubjectProducer {
   }
 }
 
+export class StaticImageDataSource extends BaseImageDataSource implements ImageDataSource {
+  setImageSize(size: ImageSize) {
+    const {width, height} = size;
+    if (width !== this.size.width || height !== this.size.height) {
+      this.data = new Float64Array(width * height);
+      this.size = size;
+      this.emit('sizeChanged', null);
+    }
+  }
+
+  setImageData(data: Float64Array) {
+    this.data = data;
+    this.updateRange();
+    this.emit('dataChanged', null);
+  }
+}
+
 export class StreamImageDataSource extends BaseImageDataSource implements ImageDataSource {
   private connection: StreamConnection | null = null;
   private sizeEvent: string = "";
