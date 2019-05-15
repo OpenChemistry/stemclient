@@ -7,6 +7,7 @@ import { IStore } from '../../store';
 import STEMImage from '../../components/stem-image';
 import { fetchImageField, getImageById } from '../../store/ducks/images';
 import { StaticImageDataSource } from '../../stem-image/data';
+import { ImageSize } from '../../stem-image/types';
 
 interface OwnProps {};
 interface StateProps {
@@ -33,6 +34,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
 
   const [brightFieldSource] = useState(new StaticImageDataSource());
   const [darkFieldSource] = useState(new StaticImageDataSource());
+  const [selectedPixel, setSelectedPixel] = useState([-1, -1]);
 
   useEffect(() => {
     if (brightField) {
@@ -48,14 +50,40 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     }
   }, [darkField, darkFieldSource]);
 
+  useEffect(() => {
+    const [x, y] = selectedPixel;
+    if (x < 0 || y < 0) {
+      return;
+    }
+    // dispatch diffractogram fetching here
+  }, [selectedPixel]);
+
+  const onPixelClick = (x: number, y: number) => {
+    let size : ImageSize;
+    if (brightField) {
+      size = brightField.size;
+    } else if (darkField) {
+      size = darkField.size;
+    } else {
+      return;
+    }
+
+    const X = Math.floor(x * size.width);
+    const Y = Math.floor(y * size.height);
+
+    if (X !== selectedPixel[0] || Y !== selectedPixel[1]) {
+      setSelectedPixel([X, Y]);
+    }
+  }
+
   if (image && image.fields) {
     return (
       <div style={{display: 'flex'}}>
         <div style={{width: '50%'}}>
-          <STEMImage source={brightFieldSource} colors={PLASMA}/>
+          <STEMImage source={brightFieldSource} colors={PLASMA} onPixelClick={onPixelClick}/>
         </div>
         <div style={{width: '50%'}}>
-          <STEMImage source={darkFieldSource} colors={VIRIDIS}/>
+          <STEMImage source={darkFieldSource} colors={VIRIDIS} onPixelClick={onPixelClick}/>
         </div>
       </div>
     );
