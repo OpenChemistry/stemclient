@@ -13,12 +13,15 @@ import { auth as authUI } from '@openchemistry/girder-ui';
 
 import {
   ROOT_ROUTE,
-  PREVIEW_ROUTE
+  PREVIEW_ROUTE,
+  LIST_ROUTE
 } from './routes';
 
 import Header from './containers/header';
 import LivePreview from './containers/live-preview';
 import PublicRoute from './containers/public-route';
+import ImagesList from './containers/images-list';
+import ImageView from './containers/image-view';
 
 const styles = (_theme: Theme) => createStyles({
   root: {
@@ -57,6 +60,8 @@ const App : React.FC<Props> = (props) => {
         <div className={classes.content}>
           <Switch>
             <PublicRoute path={`${ROOT_ROUTE}${PREVIEW_ROUTE}`} component={LivePreview} exact/>
+            <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}/:imageId`} component={ImageView} exact/>
+            <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}`} component={ImagesList} exact/>
           </Switch>
         </div>
       </ConnectedRouter>

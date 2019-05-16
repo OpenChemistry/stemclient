@@ -6,6 +6,7 @@ import { ImageView } from '../../stem-image/view';
 interface Props {
   source: ImageDataSource;
   colors?: RGBColor[];
+  onPixelClick?: (x: number, y: number) => void;
 }
 
 export default class STEMImage extends React.Component<Props> {
@@ -38,9 +39,20 @@ export default class STEMImage extends React.Component<Props> {
     }
   }
 
+  onPixelClick = (event: any) => {
+    const { onPixelClick } = this.props;
+    if (!onPixelClick) {
+      return;
+    }
+    const rect = event.target.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    onPixelClick(x, y);
+  }
+
   render() {
     return (
-      <div style={{width: '100%'}} ref={this.containerRef}></div>
+      <div style={{width: '100%'}} ref={this.containerRef} onClick={this.onPixelClick}></div>
     )
   }
 }

@@ -2,7 +2,12 @@ import { fork, ForkEffect } from 'redux-saga/effects';
 
 import { auth } from '@openchemistry/girder-redux';
 
+import { watchFetchImages, watchFetchImageField } from './images';
+
 export default function* root() : IterableIterator<ForkEffect> {
+  yield fork(watchFetchImages);
+  yield fork(watchFetchImageField);
+
   yield fork(auth.sagas.watchAuthenticate);
   yield fork(auth.sagas.watchFetchMe);
   yield fork(auth.sagas.watchFetchOauthProviders);
