@@ -25,7 +25,7 @@ export interface IStore extends IStoreBase {
   router: any;
 }
 
-const authSelector = (state: any) => state.auth;
+const authSelector = (state: IStore) => state.auth;
 auth.selectors.setRoot(authSelector);
 
 const sagaMiddleware = createSagaMiddleware();
