@@ -1,13 +1,13 @@
 import React from 'react';
 
-import { withStyles, createStyles, Theme, WithStyles } from '@material-ui/core';
+import { Theme, WithStyles, withStyles, createStyles } from '@material-ui/core/styles';
 import { AppBar, Toolbar, Button } from '@material-ui/core';
 
 import { auth as authUI } from '@openchemistry/girder-ui';
 
 const styles = (theme: Theme) => createStyles({
   logoImg: {
-    height: 6 * theme.spacing.unit
+    height: theme.spacing(6)
   }
 });
 
