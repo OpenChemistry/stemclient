@@ -126,7 +126,7 @@ class LivePreviewComponent extends Component<Props> {
       state.fieldValues = {...params};
       return state;
     })
-    this.connection.socket.emit('stem.generate', params);
+    this.connection.socket.emit('stem.execute', params);
   }
 
   render() {
