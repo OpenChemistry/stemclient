@@ -1,22 +1,49 @@
 import React, { Component, Fragment } from 'react';
-import { VIRIDIS, BLACK_WHITE } from '@colormap/presets';
+import { VIRIDIS } from '@colormap/presets';
+import { Button, Dialog, DialogTitle, DialogContent } from '@material-ui/core';
+import { createStyles, withStyles, WithStyles, Theme } from '@material-ui/core/styles';
+
 import { StreamImageDataSource } from '../../stem-image/data';
 import { StreamConnection } from '../../stem-image/connection';
 import STEMImage from '../stem-image';
+import FormComponent from './form';
+import { composeValidators, requiredValidator, integerValidator } from '../../utils/forms';
+import StatusBar from './status';
 
-interface Props {
+const styles = (theme: Theme) => createStyles({
+  root: {
+    textAlign: 'center'
+  },
+  row: {
+    marginBottom: theme.spacing(2)
+  },
+  imageContainer: {
+    display: 'flex'
+  },
+  image: {
+    width: '50%'
+  }
+});
+
+interface Props extends WithStyles<typeof styles> {
   loggedIn: boolean;
 }
 
 interface State {
   connected: boolean;
   connecting: boolean;
+  fieldValues: {[fieldName: string]: string};
+  workers: string[];
+  open: boolean;
 }
 
-export default class LivePreviewContainer extends Component<Props> {
+class LivePreviewComponent extends Component<Props> {
   state: State = {
     connected: false,
-    connecting: false
+    connecting: false,
+    fieldValues: {},
+    workers: [],
+    open: false
   }
   connection: StreamConnection;
   brightSource: StreamImageDataSource;
@@ -29,9 +56,35 @@ export default class LivePreviewContainer extends Component<Props> {
     this.brightSource.setConnection(this.connection, 'stem.size', 'stem.bright');
     this.darkSource = new StreamImageDataSource();
     this.darkSource.setConnection(this.connection, 'stem.size', 'stem.dark');
+    this.generateImage = this.generateImage.bind(this);
+    this.onReceiveWorkers = this.onReceiveWorkers.bind(this);
+    this.connectSocket = this.connectSocket.bind(this);
+    this.connection.subscribe('stem.workers', this.onReceiveWorkers);
   }
 
-  startPreview() {
+  componentDidMount() {
+    this.onLoginChange();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    const { loggedIn } = this.props;
+    if (loggedIn !== prevProps.loggedIn) {
+      this.onLoginChange();
+    }
+  }
+
+  componentWillUnmount() {
+    this.connection.unsubscribe('stem.worker', this.onReceiveWorkers);
+  }
+
+  onLoginChange() {
+    const { loggedIn } = this.props;
+    if (loggedIn) {
+      this.connectSocket();
+    }
+  }
+
+  connectSocket() {
     this.setState((state: State) => {
       state.connecting = true;
       return state;
@@ -51,43 +104,86 @@ export default class LivePreviewContainer extends Component<Props> {
       this.setState((state: State) => {
         state.connected = false;
         state.connecting = false;
+        state.workers = [];
         return state;
       });
     });
   }
 
-  stopPreview() {
+  onReceiveWorkers(workers: string[]) {
+    this.setState((state: State) => {
+      state.workers = workers;
+      return state;
+    });
+  }
+
+  disconnectSocket() {
     this.connection.disconnect();
   }
 
+  generateImage(params: {[name: string]: any}) {
+    this.setState((state: State) => {
+      state.fieldValues = {...params};
+      return state;
+    })
+    this.connection.socket.emit('stem.execute', params);
+  }
+
   render() {
-    const {loggedIn} = this.props;
-    const {connected, connecting} = this.state;
+    const { classes } = this.props;
+    const {connected, connecting, workers, open, fieldValues} = this.state;
+    const fields = [
+      {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
+      {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator)},
+      {name: 'centerY', label: 'Center Y', initial: undefined, validator: composeValidators(requiredValidator, integerValidator)}
+    ];
+
+    const initialValues = fields.reduce((total: {[name: string]: string | undefined}, {name, initial}) => {
+      if (fieldValues[name] !== undefined) {
+        total[name] = fieldValues[name];
+      } else if (initial !== undefined) {
+        total[name] = initial;
+      }
+      return total;
+    }, {});
+
     return (
-      <Fragment>
-        <button
-          onClick={() => {connected ? this.stopPreview() : this.startPreview()}}
-          disabled={!loggedIn || connecting}
-        >
-          {connected ? 'Stop' : 'Start'}
-        </button>
-        {connected &&
-        <div style={{display: 'flex'}}>
-          <div style={{width: '25%'}}>
-            <STEMImage source={this.brightSource} colors={BLACK_WHITE}/>
-          </div>
-          <div style={{width: '25%'}}>
-            <STEMImage source={this.brightSource} colors={VIRIDIS}/>
-          </div>
-          <div style={{width: '25%'}}>
-            <STEMImage source={this.darkSource} colors={BLACK_WHITE}/>
-          </div>
-          <div style={{width: '25%'}}>
-            <STEMImage source={this.darkSource} colors={VIRIDIS}/>
-          </div>
+      <div className={classes.root}>
+        <div className={classes.row}>
+          <StatusBar
+            serverStatus={connecting ? 'pending' : connected ? 'online' : 'offline'}
+            workerStatus={workers.length > 0 ? 'online' : 'offline'}
+            onServerRefresh={this.connectSocket}
+          />
         </div>
+        <Button
+          className={classes.row}
+          variant='contained' color='secondary' disabled={workers.length < 1}
+          onClick={() => {this.setState({open: true})}}
+        >
+          Generate Image
+        </Button>
+        <Dialog open={open} onClose={() => {this.setState({open: false})}}>
+          <DialogTitle>Generate Image</DialogTitle>
+          <DialogContent>
+            <FormComponent fields={fields} initialValues={initialValues} disabled={workers.length < 1} onSubmit={(values) => {this.setState({open: false}); this.generateImage(values)}}/>
+          </DialogContent>
+        </Dialog>
+        {connected &&
+        <Fragment>
+          <div className={classes.imageContainer}>
+            <div className={classes.image}>
+              <STEMImage source={this.brightSource} colors={VIRIDIS}/>
+            </div>
+            <div className={classes.image}>
+              <STEMImage source={this.darkSource} colors={VIRIDIS}/>
+            </div>
+          </div>
+        </Fragment>
         }
-      </Fragment>
+      </div>
     )
   }
 }
+
+export default withStyles(styles)(LivePreviewComponent);

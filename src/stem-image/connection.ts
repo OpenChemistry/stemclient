@@ -38,6 +38,12 @@ export class StreamConnection extends MultiSubjectProducer {
     }
   }
 
+  socketEmit(event: string, message: any) {
+    if (this.socket) {
+      this.socket.emit(event, message);
+    }
+  }
+
   subscribe(event: string, observer: IObserver) {
     if (!(event in this.subjects)) {
       if (this.socket) {
