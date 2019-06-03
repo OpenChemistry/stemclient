@@ -4,11 +4,13 @@ import { ActionType } from 'deox';
 import { IImage } from '../../types';
 import {
   fetchImages, fetchImagesSucceeded, fetchImagesFailed,
-  fetchImageField, fetchImageFieldSucceeded, fetchImageFieldFailed
+  fetchImageField, fetchImageFieldSucceeded, fetchImageFieldFailed,
+  fetchImageFrame, fetchImageFrameSucceeded, fetchImageFrameFailed
 } from '../ducks/images';
 import {
   fetchImages as fetchImagesRest,
-  fetchImageField as fetchImageFieldRest
+  fetchImageField as fetchImageFieldRest,
+  fetchImageFrame as fetchImageFrameRest
 } from '../../rest/images';
 
 function* onFetchImages(_action: ActionType<typeof fetchImages>) {
@@ -36,4 +38,18 @@ function* onFetchImageField(action: ActionType<typeof fetchImageField>) {
 
 export function* watchFetchImageField() {
   yield takeEvery(fetchImageField.toString(), onFetchImageField);
+}
+
+function* onFetchImageFrame(action: ActionType<typeof fetchImageFrame>) {
+  const { imageId, position } = action.payload;
+  try {
+    const imageFrame = yield call(fetchImageFrameRest, imageId, position, 'raw');
+    yield put(fetchImageFrameSucceeded(imageId, position, imageFrame));
+  } catch(e) {
+    yield put(fetchImageFrameFailed(e));
+  }
+}
+
+export function* watchFetchImageFrame() {
+  yield takeEvery(fetchImageFrame.toString(), onFetchImageFrame);
 }
