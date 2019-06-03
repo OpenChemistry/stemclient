@@ -1,28 +1,37 @@
-import girderClient from '@openchemistry/girder-client';
-import { AxiosResponse } from 'axios';
-import { decode } from '@msgpack/msgpack';
+import { decodeStream } from '@msgpack/msgpack';
 
-import { IImage, ImageField } from '../types';
+import girderClient from './client';
+import { IImage, ImageData } from '../types';
 import { ImageSize } from '../stem-image/types';
 
 const PREFIX = 'stem_images';
 
-export function fetchImages() : Promise<IImage[]> {
-  return girderClient().get(PREFIX)
-    .then((response: AxiosResponse<IImage[]>) => response.data);
+async function extractImageData(stream: ReadableStream) : Promise<ImageData> {
+  const decodedData: number[][] = [];
+
+  for await (const chunk of decodeStream(stream) as AsyncIterableIterator<number[][]>) {
+    chunk.forEach(row => decodedData.push(row));
+  }
+  const size: ImageSize = {
+    height: decodedData.length,
+    width: decodedData[0].length
+  }
+  const data: number[] = [];
+  decodedData.forEach(row => row.forEach(el => data.push(el)));
+  return {size, data};
 }
 
-export function fetchImageField(imageId: string, fieldName: string) : Promise<ImageField> {
-  return girderClient().get(`${PREFIX}/${imageId}/${fieldName}`, {responseType: 'arraybuffer', params: {format: 'msgpack'}})
-    .then((response: AxiosResponse<ArrayBuffer>) => {
-      const rawData = new Uint8Array(response.data);
-      const decodedData = decode(rawData) as number[][];
-      const size: ImageSize = {
-        height: decodedData.length,
-        width: decodedData[0].length
-      }
-      const data: number[] = [];
-      decodedData.forEach(row => row.forEach(el => data.push(el)));
-      return {size, data};
-    })
+export function fetchImages() : Promise<IImage[]> {
+  return girderClient().get(PREFIX)
+    .then(res => res.json());
+}
+
+export function fetchImageField(imageId: string, fieldName: string) : Promise<ImageData> {
+  return girderClient().get(`${PREFIX}/${imageId}/${fieldName}`, {format: 'msgpack'})
+    .then(res => extractImageData(res.body!));
+}
+
+export function fetchImageFrame(imageId: string, scanPosition: number, type: string) : Promise<ImageData> {
+  return girderClient().get(`${PREFIX}/${imageId}/frames/${scanPosition}`, {type, format: 'msgpack'})
+  .then(res => extractImageData(res.body!));
 }
