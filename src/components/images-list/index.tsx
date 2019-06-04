@@ -10,7 +10,7 @@ const styles = (theme: Theme) => createStyles({
   title: {
     margin: theme.spacing(2, 0, 1)
   }
-})
+});
 interface Props extends WithStyles<typeof styles> {
   images: IImage[];
   onOpen?: (_id: string) => void;

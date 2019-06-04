@@ -4,10 +4,11 @@ import { VIRIDIS } from '@colormap/presets';
 
 import { IImage, ImageData } from '../../types';
 import { IStore } from '../../store';
-import STEMImage from '../../components/stem-image';
-import { fetchImageField, fetchImageFrame, getImageById } from '../../store/ducks/images';
+
+import { fetchImages, fetchImageField, fetchImageFrame, getImageById } from '../../store/ducks/images';
 import { StaticImageDataSource } from '../../stem-image/data';
 import { ImageSize } from '../../stem-image/types';
+import ImageView from '../../components/image-view';
 
 interface OwnProps {};
 interface StateProps {
@@ -42,6 +43,12 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
       dispatch(fetchImageField(imageId, 'dark'));
     }
   }, [imageId, dispatch]);
+
+  useEffect(() => {
+    if (imageId && !image) {
+      dispatch(fetchImages());
+    }
+  }, [imageId, image, dispatch]);
 
   useEffect(() => {
     if (brightField) {
@@ -93,18 +100,14 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
 
   if (image && image.fields) {
     return (
-      <div style={{display: 'flex'}}>
-        <div style={{width: '25%'}}>
-          <STEMImage source={brightFieldSource} colors={VIRIDIS} onPixelClick={onPixelClick}/>
-        </div>
-        <div style={{width: '25%'}}>
-          <STEMImage source={darkFieldSource} colors={VIRIDIS} onPixelClick={onPixelClick}/>
-        </div>
-        <div style={{width: '25%'}}></div>
-        <div style={{width: '25%'}}>
-          <STEMImage source={frameSource} colors={VIRIDIS}/>
-        </div>
-      </div>
+      <ImageView
+        image={image}
+        brightFieldSource={brightFieldSource}
+        darkFieldSource={darkFieldSource}
+        frameSource={frameSource}
+        colors={VIRIDIS}
+        onPixelClick={onPixelClick}
+      />
     );
   } else {
     return null;
