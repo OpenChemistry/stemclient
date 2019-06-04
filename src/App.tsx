@@ -68,6 +68,7 @@ const App : React.FC<Props> = (props) => {
       <authUI.LoginOptions girder={development}/>
       <authUI.GirderLogin/>
       <authUI.OauthRedirect/>
+      <authUI.NerscLogin/>
     </div>
   );
 }
