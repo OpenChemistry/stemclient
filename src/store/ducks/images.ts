@@ -1,7 +1,7 @@
 import { createAction, createReducer } from 'deox';
 import produce from 'immer';
 
-import { IImage, FieldName, ImageData } from '../../types';
+import { IImage, FieldName, FrameType, ImageData } from '../../types';
 
 // Actions
 
@@ -25,7 +25,7 @@ export const fetchImageField = createAction(FETCH_IMAGE_FIELD_REQUESTED, resolve
 export const fetchImageFieldSucceeded = createAction(FETCH_IMAGE_FIELD_SUCCEEDED, resolve => (imageId: string, fieldName: FieldName, data: ImageData) => resolve({imageId, fieldName, data}));
 export const fetchImageFieldFailed = createAction(FETCH_IMAGE_FIELD_FAILED, resolve => (error: any) => resolve(error));
 
-export const fetchImageFrame = createAction(FETCH_IMAGE_FRAME_REQUESTED, resolve => (imageId: string, position: number) => resolve({imageId, position}));
+export const fetchImageFrame = createAction(FETCH_IMAGE_FRAME_REQUESTED, resolve => (imageId: string, position: number, type: FrameType) => resolve({imageId, position, type}));
 export const fetchImageFrameSucceeded = createAction(FETCH_IMAGE_FRAME_SUCCEEDED, resolve => (imageId: string, position: number, data: ImageData) => resolve({imageId, position, data}));
 export const fetchImageFrameFailed = createAction(FETCH_IMAGE_FRAME_FAILED, resolve => (error: any) => resolve(error));
 

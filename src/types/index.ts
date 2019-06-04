@@ -1,6 +1,7 @@
 import { ImageSize } from '../stem-image/types';
 
 export type FieldName = 'bright' | 'dark';
+export type FrameType = 'raw' | 'electron';
 export interface ImageData {
   size: ImageSize;
   data: number[];

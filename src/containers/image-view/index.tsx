@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { VIRIDIS, BLACK_WHITE } from '@colormap/presets';
+import { VIRIDIS } from '@colormap/presets';
 
 import { IImage, ImageData } from '../../types';
 import { IStore } from '../../store';
@@ -69,7 +69,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
       return;
     }
 
-    dispatch(fetchImageFrame(imageId, selectedPixel));
+    dispatch(fetchImageFrame(imageId, selectedPixel, 'raw'));
   }, [selectedPixel, imageId, dispatch]);
 
   const onPixelClick = (x: number, y: number) => {
@@ -102,7 +102,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
         </div>
         <div style={{width: '25%'}}></div>
         <div style={{width: '25%'}}>
-          <STEMImage source={frameSource} colors={BLACK_WHITE}/>
+          <STEMImage source={frameSource} colors={VIRIDIS}/>
         </div>
       </div>
     );
