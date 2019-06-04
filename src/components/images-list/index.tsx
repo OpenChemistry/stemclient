@@ -1,27 +1,39 @@
-import React from 'react';
+import React, { Fragment } from 'react';
+import filesize from 'filesize';
 import { IImage } from '../../types';
 
-import { Paper, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
+import { Paper, List, ListItem, ListItemIcon, ListItemText, Typography, withStyles } from '@material-ui/core';
 import ImageIcon from '@material-ui/icons/Image';
+import { createStyles, WithStyles, Theme } from '@material-ui/core/styles';
 
-interface Props {
+const styles = (theme: Theme) => createStyles({
+  title: {
+    margin: theme.spacing(2, 0, 1)
+  }
+})
+interface Props extends WithStyles<typeof styles> {
   images: IImage[];
   onOpen?: (_id: string) => void;
 }
 
-const ImagesList: React.FC<Props> = ({images, onOpen = () => {}}) => {
+const ImagesList: React.FC<Props> = ({images, onOpen = () => {}, classes}) => {
   return (
-    <Paper>
-      <List>
-        {images.map(image => (
-          <ListItem key={image._id} button onClick={() => {onOpen(image._id);}}>
-            <ListItemIcon><ImageIcon/></ListItemIcon>
-            <ListItemText>{image._id}</ListItemText>
-          </ListItem>
-        ))}
-      </List>
-    </Paper>
+    <Fragment>
+      <Typography variant="h6" className={classes.title}>
+        Images
+      </Typography>
+      <Paper>
+        <List>
+          {images.map(image => (
+            <ListItem key={image._id} button onClick={() => {onOpen(image._id);}}>
+              <ListItemIcon><ImageIcon/></ListItemIcon>
+              <ListItemText primary={`${image.name} (${filesize(image.size || 0)})`} secondary={image.created}/>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Fragment>
   )
 }
 
-export default ImagesList;
+export default withStyles(styles)(ImagesList);
