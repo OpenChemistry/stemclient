@@ -4,6 +4,7 @@ import { auth } from '@openchemistry/girder-redux';
 
 import { authenticateFlask, authenticateFlaskSucceeded, authenticateFlaskFailed } from '../ducks/flask';
 import { authenticateFlask as authenticateFlaskRest } from '../../rest/flask';
+import {default as altGirderClient} from '../../rest/client';
 
 function* onAuthenticateFlask(action: ActionType<typeof authenticateFlask>) {
   const girderToken = action.payload;
@@ -21,6 +22,7 @@ export function* watchAuthenticateFlask() {
 
 function* onSetToken(action: any) {
   const girderToken : string = action.payload;
+  altGirderClient().setToken(girderToken);
   yield put(authenticateFlask(girderToken));
 }
 

@@ -1,28 +1,32 @@
-import girderClient from '@openchemistry/girder-client';
-import { AxiosResponse } from 'axios';
-import { decode } from '@msgpack/msgpack';
-
-import { IImage, ImageField } from '../types';
+import girderClient from './client';
+import { IImage, FrameType } from '../types';
 import { ImageSize } from '../stem-image/types';
 
 const PREFIX = 'stem_images';
 
 export function fetchImages() : Promise<IImage[]> {
   return girderClient().get(PREFIX)
-    .then((response: AxiosResponse<IImage[]>) => response.data);
+    .then(res => res.json());
 }
 
-export function fetchImageField(imageId: string, fieldName: string) : Promise<ImageField> {
-  return girderClient().get(`${PREFIX}/${imageId}/${fieldName}`, {responseType: 'arraybuffer', params: {format: 'msgpack'}})
-    .then((response: AxiosResponse<ArrayBuffer>) => {
-      const rawData = new Uint8Array(response.data);
-      const decodedData = decode(rawData) as number[][];
-      const size: ImageSize = {
-        height: decodedData.length,
-        width: decodedData[0].length
-      }
-      const data: number[] = [];
-      decodedData.forEach(row => row.forEach(el => data.push(el)));
-      return {size, data};
-    })
+export function fetchImageFieldSize(imageId: string, fieldName: string) : Promise<ImageSize> {
+  return girderClient().get(`${PREFIX}/${imageId}/${fieldName}/shape`)
+    .then(res => res.json())
+    .then(([height, width]: number[]) => ({height, width}));
+}
+
+export function fetchImageField(imageId: string, fieldName: string) : Promise<ReadableStream> {
+  return girderClient().get(`${PREFIX}/${imageId}/${fieldName}`, {format: 'msgpack'})
+    .then(res => res.body!);
+}
+
+export function fetchImageFrameSize(imageId: string, type: FrameType) : Promise<ImageSize> {
+  return girderClient().get(`${PREFIX}/${imageId}/frames/shape`, {type})
+    .then(res => res.json())
+    .then(([height, width]: number[]) => ({height, width}));
+}
+
+export function fetchImageFrame(imageId: string, scanPosition: number, type: FrameType) : Promise<ReadableStream> {
+  return girderClient().get(`${PREFIX}/${imageId}/frames/${scanPosition}`, {type, format: 'msgpack'})
+    .then(res => res.body!);
 }
