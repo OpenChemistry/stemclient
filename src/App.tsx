@@ -22,6 +22,7 @@ import LivePreview from './containers/live-preview';
 import PublicRoute from './containers/public-route';
 import ImagesList from './containers/images-list';
 import ImageView from './containers/image-view';
+import Navigation from './containers/navigation';
 
 const styles = (_theme: Theme) => createStyles({
   root: {
@@ -57,6 +58,7 @@ const App : React.FC<Props> = (props) => {
       <CssBaseline/>
       <Header/>
       <ConnectedRouter history={history}>
+        <Navigation/>
         <div className={classes.content}>
           <Switch>
             <PublicRoute path={`${ROOT_ROUTE}${PREVIEW_ROUTE}`} component={LivePreview} exact/>
