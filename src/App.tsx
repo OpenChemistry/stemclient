@@ -17,12 +17,14 @@ import {
   LIST_ROUTE
 } from './routes';
 
+import PrivateRoute from './containers/route/private';
+import PublicRoute from './containers/route/public';
 import Header from './containers/header';
 import LivePreview from './containers/live-preview';
-import PublicRoute from './containers/public-route';
 import ImagesList from './containers/images-list';
 import ImageView from './containers/image-view';
 import Navigation from './containers/navigation';
+import LoginRequired from './components/login-required';
 
 const styles = (_theme: Theme) => createStyles({
   root: {
@@ -61,7 +63,7 @@ const App : React.FC<Props> = (props) => {
         <Navigation/>
         <div className={classes.content}>
           <Switch>
-            <PublicRoute path={`${ROOT_ROUTE}${PREVIEW_ROUTE}`} component={LivePreview} exact/>
+            <PrivateRoute path={`${ROOT_ROUTE}${PREVIEW_ROUTE}`} component={LivePreview} fallback={LoginRequired} exact/>
             <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}/:imageId`} component={ImageView} exact/>
             <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}`} component={ImagesList} exact/>
           </Switch>

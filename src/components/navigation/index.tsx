@@ -7,31 +7,22 @@ import HomeIcon from '@material-ui/icons/Home';
 
 interface Props {
   section: string;
+  authenticated: boolean;
   onClick: (section: string) => void;
 }
 
-const sectionToIdx : {[key: string]: number} = {
-  '': 0,
-  'live-preview': 1,
-  'images': 2  
-}
-
-const idxToSection : {[key: number]: string} = {
-  0: '',
-  1: 'live-preview',
-  2: 'images'
-}
-
-const Navigation : React.FC<Props> = ({section, onClick}) => {
+const Navigation : React.FC<Props> = ({section, authenticated, onClick}) => {
   return (
     <BottomNavigation
-      value={sectionToIdx[section]}
-      onChange={(e, newValue) => {onClick(idxToSection[newValue])}}
+      value={section}
+      onChange={(e, newValue) => {onClick(newValue)}}
       showLabels
     >
-      <BottomNavigationAction label='Home' icon={<HomeIcon/>}/>
-      <BottomNavigationAction label='Live Preview' icon={<LiveIcon/>}/>
-      <BottomNavigationAction label='Datasets' icon={<ListIcon/>}/>
+      <BottomNavigationAction value={''} label='Home' icon={<HomeIcon/>}/>
+      {authenticated &&
+      <BottomNavigationAction value={'live-preview'} label='Live Preview' icon={<LiveIcon/>}/>
+      }
+      <BottomNavigationAction value={'images'} label='Datasets' icon={<ListIcon/>}/>
     </BottomNavigation>
   )
 }
