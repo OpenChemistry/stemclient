@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import filesize from 'filesize';
+import moment from 'moment';
 import { IImage } from '../../types';
 
 import { Paper, List, ListItem, ListItemIcon, ListItemText, Typography, withStyles } from '@material-ui/core';
@@ -27,7 +28,10 @@ const ImagesList: React.FC<Props> = ({images, onOpen = () => {}, classes}) => {
           {images.map(image => (
             <ListItem key={image._id} button onClick={() => {onOpen(image._id);}}>
               <ListItemIcon><ImageIcon/></ListItemIcon>
-              <ListItemText primary={`${image.name} (${filesize(image.size || 0)})`} secondary={image.created}/>
+              <ListItemText
+                primary={`${image.name} (${filesize(image.size || 0)})`}
+                secondary={moment(image.created).format('MMM D YYYY HH:mm:ss')}
+              />
             </ListItem>
           ))}
         </List>
