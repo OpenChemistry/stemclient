@@ -20,6 +20,7 @@ interface FormField {
   initial?: string;
   validator?: Validator;
   width?: number;
+  type?: 'text' | 'number' | 'password';
 }
 
 interface Props extends WithStyles<typeof styles> {
@@ -38,7 +39,7 @@ const FormComponent : React.FC<Props> = ({fields, initialValues, onSubmit, disab
         <form onSubmit={handleSubmit}
         >
           <Grid container spacing={3}>
-          {fields.map(({name, label, validator, width}) => (
+          {fields.map(({name, label, validator, width, type}) => (
             <Grid item key={name}  xs={width ? width as any : 12}>
               <FormControl  fullWidth>
                 <Field
@@ -52,6 +53,7 @@ const FormComponent : React.FC<Props> = ({fields, initialValues, onSubmit, disab
                       InputLabelProps={{
                         shrink: true
                       }}
+                      type={type}
                       error={touched && !!error}
                       helperText={touched ? error : undefined}></TextField>
                   )}}
