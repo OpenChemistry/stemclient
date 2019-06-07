@@ -134,8 +134,10 @@ class LivePreviewComponent extends Component<Props> {
     const {connected, connecting, workers, open, fieldValues} = this.state;
     const fields = [
       {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
-      {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator)},
-      {name: 'centerY', label: 'Center Y', initial: undefined, validator: composeValidators(requiredValidator, integerValidator)}
+      {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6},
+      {name: 'centerY', label: 'Center Y', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6},
+      {name: 'minRadius', label: 'Min Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6},
+      {name: 'maxRadius', label: 'Max Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6}
     ];
 
     const initialValues = fields.reduce((total: {[name: string]: string | undefined}, {name, initial}) => {
