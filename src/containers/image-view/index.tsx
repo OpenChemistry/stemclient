@@ -86,7 +86,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     const positions = [];
     for (let i = newSelection[0]; i < newSelection[1]; ++i) {
       for (let j = newSelection[2]; j < newSelection[3]; ++j) {
-        const pixelIndex = i * size.width + j;
+        const pixelIndex = j * size.width + i;
         positions.push(pixelIndex);
       }
     }
