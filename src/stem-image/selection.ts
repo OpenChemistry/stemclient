@@ -112,7 +112,9 @@ export class SquareSelection extends MultiSubjectProducer {
   }
 
   sizeObserver() {
-    this.resize();
+    setTimeout(() => {
+      this.resize();
+    }, 0);
   }
 
   resize() {
@@ -121,7 +123,7 @@ export class SquareSelection extends MultiSubjectProducer {
     this.xScale = linearScale([0, width], [0, clientWidth]);
     this.yScale = linearScale([0, height], [0, clientHeight]);
     this.canvas.width = clientWidth;
-    this.canvas.height = clientWidth;
+    this.canvas.height = clientHeight;
     this.draw();
   }
 

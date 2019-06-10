@@ -1,14 +1,14 @@
-import React from 'react';
+import React, {Fragment} from 'react';
 
 const Overlay : React.FC<{}> = ({children}) => {
   return (
-    <div style={{position: 'relative', width: '100%', height: '100%'}}>
+    <Fragment>
       {React.Children.toArray(children).map((child, i) => (
-        <div key={i} style={{position: 'absolute', width: '100%'}}>
+        <div key={i} style={{position: 'absolute', width: '100%', height: '100%'}}>
           {child}
         </div>
       ))}
-    </div>
+    </Fragment>
   )
 }
 

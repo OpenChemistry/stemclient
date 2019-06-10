@@ -40,7 +40,6 @@ const SelectionOverlay : React.FC<Props> = ({source, selection, onSelectionChang
       updateSelection();
     }
     return () => {
-      console.log("CLEANUP")
       if (imageSelection) {
         imageSelection.removeSubscriptions();
         imageSelection.unsubscribe('selectionChanged', selectionObserver);
@@ -52,7 +51,7 @@ const SelectionOverlay : React.FC<Props> = ({source, selection, onSelectionChang
     updateSelection();
   }, [selection]);
 
-  return <div style={{width: '100%'}} ref={containerRef}></div>;
+  return <div style={{width: '100%', height: '100%'}} ref={containerRef}></div>;
 }
 
 export default SelectionOverlay;

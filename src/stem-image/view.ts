@@ -61,7 +61,12 @@ export class ImageView {
     });
 
     this.context.putImageData(this.imageData, 0, 0);
-    this.image.src = this.canvas.toDataURL();
+
+    if (this.imageData.width * this.imageData.height <= 1) {
+      this.image.src = '';
+    } else {
+      this.image.src = this.canvas.toDataURL();
+    }
   }
 
   setColorMap(colors: RGBColor[]) {

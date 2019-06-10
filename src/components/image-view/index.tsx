@@ -13,6 +13,9 @@ import { IImage } from '../../types';
 const styles = (theme: Theme) => createStyles({
   title: {
     margin: theme.spacing(4, 0, 2)
+  },
+  image: {
+    marginBottom: theme.spacing(2)
   }
 });
 
@@ -40,14 +43,16 @@ const ImageView: React.FC<Props> = ({
           <Typography variant="h5" className={classes.title}>
             Fields
           </Typography>
-          <Overlay>
-            <STEMImage source={brightFieldSource} colors={colors}/>
-            <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
-          </Overlay>
-          <Overlay>
-            <STEMImage source={darkFieldSource} colors={colors}/>
-            <SelectionOverlay source={darkFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
-          </Overlay>
+          <div className={classes.image}>
+            <STEMImage source={brightFieldSource} colors={colors}>
+              <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+            </STEMImage>
+          </div>
+          <div className={classes.image}>
+            <STEMImage source={darkFieldSource} colors={colors}>
+              <SelectionOverlay source={darkFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+            </STEMImage>
+          </div>
         </Grid>
         <Grid item xs={6}>
           <Typography variant="h5" className={classes.title}>
