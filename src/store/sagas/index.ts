@@ -20,4 +20,5 @@ export default function* root() : IterableIterator<ForkEffect> {
   yield fork(auth.sagas.watchInvalidateToken);
   yield fork(auth.sagas.watchNewToken);
   yield fork(auth.sagas.watchUsernameLogin);
+  yield fork(auth.sagas.watchNerscLogin);
 }

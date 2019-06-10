@@ -4,7 +4,7 @@ import { MultiSubjectProducer, IObserver } from './subject';
 export class StreamConnection extends MultiSubjectProducer {
   socket: any = null;
 
-  connect(url: string, namespace: string) : [Promise<{}>, Promise<{}>] {
+  connect(url: string, namespace: string) : [Promise<unknown>, Promise<unknown>] {
     this.disconnect();
 
     const socket = openSocket(`${url}/${namespace}`, {transports: ['websocket']});

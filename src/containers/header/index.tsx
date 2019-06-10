@@ -28,7 +28,7 @@ class HeaderContainer extends React.Component<Props> {
   render() {
     const { loggedIn, showMenu, logo } = this.props;
     return (
-      <Header loggedIn={loggedIn} showMenu={showMenu} logo={logo} />
+      <Header loggedIn={loggedIn} showMenu={showMenu} logo={logo} onLogoClick={this.onLogoClick} />
     );
   }
 }

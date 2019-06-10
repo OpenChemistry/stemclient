@@ -15,5 +15,15 @@ export interface IImage {
   },
   frames?: {
     [position: number]: ImageData;
-  }
+  },
+  created?: string;
+  name?: string;
+  size?: number;
+}
+
+export interface GirderFile {
+  _id: string;
+  created: string;
+  name: string;
+  size: number;
 }

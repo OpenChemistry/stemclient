@@ -1,8 +1,8 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery, all } from 'redux-saga/effects';
 import { ActionType } from 'deox';
 import { decodeStream } from '@msgpack/msgpack';
 
-import { IImage, ImageData, FrameType } from '../../types';
+import { IImage, ImageData, FrameType, GirderFile } from '../../types';
 import { ImageSize } from '../../stem-image/types';
 
 import {
@@ -16,6 +16,7 @@ import {
   fetchImageFrame as fetchImageFrameRest,
   fetchImageFieldSize, fetchImageFrameSize
 } from '../../rest/images';
+import { fetchFile } from '../../rest/files';
 
 async function extractImageData(stream: ReadableStream, size: ImageSize, type: FrameType) : Promise<ImageData> {
   const decodedData : number[] = [];
@@ -55,7 +56,15 @@ async function extractImageData(stream: ReadableStream, size: ImageSize, type: F
 
 function* onFetchImages(_action: ActionType<typeof fetchImages>) {
   try {
-    const images : IImage[] = yield call(fetchImagesRest);
+    let images : IImage[] = yield call(fetchImagesRest);
+    const fetchImagesFiles = images.map(image => call(fetchFile, image.fileId));
+    // Add metadata from the file associated to the image
+    const files: GirderFile[] = yield all(fetchImagesFiles);
+    images = images.map((image, i) => {
+      const {created, name, size} = files[i];
+      image = {...image, created, name, size};
+      return image;
+    });
     yield put(fetchImagesSucceeded(images));
   } catch(e) {
     yield put(fetchImagesFailed(e));
