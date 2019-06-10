@@ -5,9 +5,9 @@ import { VIRIDIS } from '@colormap/presets';
 import { IImage, ImageData } from '../../types';
 import { IStore } from '../../store';
 
-import { fetchImages, fetchImageField, fetchImageFrame, getImageById } from '../../store/ducks/images';
+import { fetchImages, fetchImageField, fetchImageFrames, getImageById } from '../../store/ducks/images';
 import { StaticImageDataSource } from '../../stem-image/data';
-import { ImageSize, Vec2, Vec4 } from '../../stem-image/types';
+import { ImageSize, Vec4 } from '../../stem-image/types';
 import ImageView from '../../components/image-view';
 
 interface OwnProps {};
@@ -23,7 +23,6 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   const [darkFieldSource] = useState(new StaticImageDataSource());
   const [frameSource] = useState(new StaticImageDataSource());
   const [selection, setSelection] = useState([0, 0, 0, 0] as Vec4);
-  const [selectedPixel, setSelectedPixel] = useState(-1);
 
   let darkField : ImageData | undefined;
   let brightField : ImageData | undefined;
@@ -35,7 +34,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   }
 
   if (image && image.frames) {
-    rawFrame = image.frames[selectedPixel];
+    rawFrame = image.frames['cumulated'];
   }
 
   useEffect(() => {
@@ -72,15 +71,9 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     }
   }, [rawFrame, frameSource]);
 
-  useEffect(() => {
-    if (selectedPixel < 0) {
-      return;
-    }
+  const onSelectionChange = (newSelection: Vec4) => {
+    setSelection(newSelection);
 
-    dispatch(fetchImageFrame(imageId, selectedPixel, 'raw'));
-  }, [selectedPixel, imageId, dispatch]);
-
-  const onPixelClick = (x: number, y: number) => {
     let size : ImageSize;
     if (brightField) {
       size = brightField.size;
@@ -90,17 +83,15 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
       return;
     }
 
-    const X = Math.floor(x * size.width);
-    const Y = Math.floor(y * size.height);
-
-    const pixelIndex = Y * size.width + X;
-    if (pixelIndex !== selectedPixel) {
-      // setSelectedPixel(pixelIndex);
+    const positions = [];
+    for (let i = newSelection[0]; i < newSelection[1]; ++i) {
+      for (let j = newSelection[2]; j < newSelection[3]; ++j) {
+        const pixelIndex = i * size.width + j;
+        positions.push(pixelIndex);
+      }
     }
-  }
 
-  const onSelectionChange = (newSelection: Vec4) => {
-    setSelection(newSelection);
+    dispatch(fetchImageFrames(imageId, positions, 'raw', true));
   }
 
   if (image && image.fields) {
@@ -111,7 +102,6 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
         darkFieldSource={darkFieldSource}
         frameSource={frameSource}
         colors={VIRIDIS}
-        onPixelClick={onPixelClick}
         onSelectionChange={onSelectionChange}
         selection={selection}
       />

@@ -15,6 +15,7 @@ export interface IImage {
   },
   frames?: {
     [position: number]: ImageData;
+    cumulated?: ImageData;
   },
   created?: string;
   name?: string;

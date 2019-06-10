@@ -40,6 +40,7 @@ const SelectionOverlay : React.FC<Props> = ({source, selection, onSelectionChang
       updateSelection();
     }
     return () => {
+      console.log("CLEANUP")
       if (imageSelection) {
         imageSelection.removeSubscriptions();
         imageSelection.unsubscribe('selectionChanged', selectionObserver);

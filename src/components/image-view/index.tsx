@@ -23,12 +23,11 @@ interface Props extends WithStyles<typeof styles> {
   frameSource: ImageDataSource;
   colors: RGBColor[];
   selection: Vec4;
-  onPixelClick?: (x: number, y: number) => void;
   onSelectionChange?: (selection: Vec4) => void;
 }
 
 const ImageView: React.FC<Props> = ({
-  image, colors, onPixelClick, onSelectionChange, classes,
+  image, colors, onSelectionChange, classes,
   brightFieldSource, darkFieldSource, frameSource, selection
 }) => {
   return (
@@ -42,12 +41,12 @@ const ImageView: React.FC<Props> = ({
             Fields
           </Typography>
           <Overlay>
-            <STEMImage source={brightFieldSource} colors={colors} onPixelClick={onPixelClick}/>
+            <STEMImage source={brightFieldSource} colors={colors}/>
             <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
           </Overlay>
           <Overlay>
-            <STEMImage source={darkFieldSource} colors={colors} onPixelClick={onPixelClick}/>
-            <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+            <STEMImage source={darkFieldSource} colors={colors}/>
+            <SelectionOverlay source={darkFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
           </Overlay>
         </Grid>
         <Grid item xs={6}>
