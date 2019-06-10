@@ -7,7 +7,7 @@ import { IStore } from '../../store';
 
 import { fetchImages, fetchImageField, fetchImageFrame, getImageById } from '../../store/ducks/images';
 import { StaticImageDataSource } from '../../stem-image/data';
-import { ImageSize } from '../../stem-image/types';
+import { ImageSize, Vec2, Vec4 } from '../../stem-image/types';
 import ImageView from '../../components/image-view';
 
 interface OwnProps {};
@@ -22,6 +22,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   const [brightFieldSource] = useState(new StaticImageDataSource());
   const [darkFieldSource] = useState(new StaticImageDataSource());
   const [frameSource] = useState(new StaticImageDataSource());
+  const [selection, setSelection] = useState([0, 0, 0, 0] as Vec4);
   const [selectedPixel, setSelectedPixel] = useState(-1);
 
   let darkField : ImageData | undefined;
@@ -94,8 +95,12 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
 
     const pixelIndex = Y * size.width + X;
     if (pixelIndex !== selectedPixel) {
-      setSelectedPixel(pixelIndex);
+      // setSelectedPixel(pixelIndex);
     }
+  }
+
+  const onSelectionChange = (newSelection: Vec4) => {
+    setSelection(newSelection);
   }
 
   if (image && image.fields) {
@@ -107,6 +112,8 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
         frameSource={frameSource}
         colors={VIRIDIS}
         onPixelClick={onPixelClick}
+        onSelectionChange={onSelectionChange}
+        selection={selection}
       />
     );
   } else {

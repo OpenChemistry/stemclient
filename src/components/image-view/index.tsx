@@ -4,7 +4,10 @@ import {Typography, Grid} from '@material-ui/core';
 import { createStyles, WithStyles, Theme, withStyles } from '@material-ui/core/styles';
 
 import { ImageDataSource } from '../../stem-image/data';
-import STEMImage from '../../components/stem-image';
+import { Vec4 } from '../../stem-image/types';
+import STEMImage from '../stem-image';
+import Overlay from '../overlay';
+import SelectionOverlay from '../selection-overlay';
 import { IImage } from '../../types';
 
 const styles = (theme: Theme) => createStyles({
@@ -19,12 +22,14 @@ interface Props extends WithStyles<typeof styles> {
   darkFieldSource: ImageDataSource;
   frameSource: ImageDataSource;
   colors: RGBColor[];
+  selection: Vec4;
   onPixelClick?: (x: number, y: number) => void;
+  onSelectionChange?: (selection: Vec4) => void;
 }
 
 const ImageView: React.FC<Props> = ({
-  image, colors, onPixelClick, classes,
-  brightFieldSource, darkFieldSource, frameSource
+  image, colors, onPixelClick, onSelectionChange, classes,
+  brightFieldSource, darkFieldSource, frameSource, selection
 }) => {
   return (
     <Fragment>
@@ -36,8 +41,14 @@ const ImageView: React.FC<Props> = ({
           <Typography variant="h5" className={classes.title}>
             Fields
           </Typography>
-          <STEMImage source={brightFieldSource} colors={colors} onPixelClick={onPixelClick}/>
-          <STEMImage source={darkFieldSource} colors={colors} onPixelClick={onPixelClick}/>
+          <Overlay>
+            <STEMImage source={brightFieldSource} colors={colors} onPixelClick={onPixelClick}/>
+            <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+          </Overlay>
+          <Overlay>
+            <STEMImage source={darkFieldSource} colors={colors} onPixelClick={onPixelClick}/>
+            <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+          </Overlay>
         </Grid>
         <Grid item xs={6}>
           <Typography variant="h5" className={classes.title}>
