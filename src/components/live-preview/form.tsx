@@ -20,7 +20,7 @@ interface FormField {
   initial?: string;
   validator?: Validator;
   width?: number;
-  type?: 'text' | 'number' | 'password';
+  type?: string;
 }
 
 interface Props extends WithStyles<typeof styles> {

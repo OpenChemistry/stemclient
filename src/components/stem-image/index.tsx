@@ -2,6 +2,7 @@ import React from 'react';
 import { RGBColor } from '@colormap/core';
 import { ImageDataSource } from '../../stem-image/data';
 import { ImageView } from '../../stem-image/view';
+import Overlay from '../overlay';
 
 interface Props {
   source: ImageDataSource;
@@ -51,8 +52,13 @@ export default class STEMImage extends React.Component<Props> {
   }
 
   render() {
+    const { children } = this.props;
     return (
-      <div style={{width: '100%'}} ref={this.containerRef} onClick={this.onPixelClick}></div>
+      <div style={{position: 'relative', width: '100%', fontSize: 0}} ref={this.containerRef}>
+        <Overlay>
+          {children}
+        </Overlay>
+      </div>
     )
   }
 }

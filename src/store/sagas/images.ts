@@ -1,4 +1,4 @@
-import { call, put, takeEvery, all } from 'redux-saga/effects';
+import { call, put, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ActionType } from 'deox';
 import { decodeStream } from '@msgpack/msgpack';
 
@@ -8,7 +8,7 @@ import { ImageSize } from '../../stem-image/types';
 import {
   fetchImages, fetchImagesSucceeded, fetchImagesFailed,
   fetchImageField, fetchImageFieldSucceeded, fetchImageFieldFailed,
-  fetchImageFrame, fetchImageFrameSucceeded, fetchImageFrameFailed
+  fetchImageFrames, fetchImageFrameSucceeded, fetchImageFrameFailed
 } from '../ducks/images';
 import {
   fetchImages as fetchImagesRest,
@@ -91,18 +91,45 @@ export function* watchFetchImageField() {
   yield takeEvery(fetchImageField.toString(), onFetchImageField);
 }
 
-function* onFetchImageFrame(action: ActionType<typeof fetchImageFrame>) {
-  const { imageId, position, type } = action.payload;
+function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
+  const { imageId, positions, type, cumulate } = action.payload;
   try {
     const imageSize = yield call(fetchImageFrameSize, imageId, type);
-    const imageStream = yield call(fetchImageFrameRest, imageId, position, type);
-    const imageFrame = yield call(extractImageData, imageStream, imageSize, type);
-    yield put(fetchImageFrameSucceeded(imageId, position, imageFrame));
+
+    let imageData: ImageData;
+
+    const data: number[] = [];
+    if (cumulate) {
+      for (let i = 0; i < imageSize.width * imageSize.height; ++i) {
+        data.push(0);
+      }
+      imageData = {size: imageSize, data};
+      yield put(fetchImageFrameSucceeded(imageId, 'cumulated', imageData));
+    }
+
+    let positionName: 'cumulated' | number;
+
+    for (let position of positions) {
+      const imageStream = yield call(fetchImageFrameRest, imageId, position, type);
+      const imageFrame = yield call(extractImageData, imageStream, imageSize, type);
+
+      if (cumulate) {
+        imageFrame.data.forEach((value: number, i: number) => {
+          data[i] += value;
+        });
+        imageData = {size: imageSize, data};
+        positionName = 'cumulated';
+      } else {
+        imageData = imageFrame;
+        positionName = position;
+      }
+      yield put(fetchImageFrameSucceeded(imageId, positionName, imageData));
+    }
   } catch(e) {
     yield put(fetchImageFrameFailed(e));
   }
 }
 
 export function* watchFetchImageFrame() {
-  yield takeEvery(fetchImageFrame.toString(), onFetchImageFrame);
+  yield takeLatest(fetchImageFrames.toString(), onFetchImageFrames);
 }
