@@ -12,6 +12,7 @@ export class ImageView {
   constructor(private container: HTMLDivElement, private source: ImageDataSource) {
     this.image = document.createElement('img');
     this.image.style.width = '100%';
+    this.setInterpolation(false);
     this.canvas = document.createElement('canvas');
     this.context = this.canvas.getContext('2d')!;
     this.container.appendChild(this.image);
@@ -72,5 +73,15 @@ export class ImageView {
   setColorMap(colors: RGBColor[]) {
     this.colors = colors;
     this.draw();
+  }
+
+  setInterpolation(enable: boolean) {
+    if (enable) {
+      this.image.style.setProperty('image-rendering', 'auto');
+    } else {
+      this.image.style.setProperty('image-rendering', '-webkit-crisp-edges');
+      this.image.style.setProperty('image-rendering', '-moz-crisp-edges');
+      this.image.style.setProperty('image-rendering', 'pixelated');
+    }
   }
 }
