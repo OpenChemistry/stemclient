@@ -23,6 +23,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   const [darkFieldSource] = useState(new StaticImageDataSource());
   const [frameSource] = useState(new StaticImageDataSource());
   const [selection, setSelection] = useState([0, 0, 0, 0] as Vec4);
+  const [progress, setProgress] = useState(100);
 
   let darkField : ImageData | undefined;
   let brightField : ImageData | undefined;
@@ -91,7 +92,12 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
       }
     }
 
-    dispatch(fetchImageFrames(imageId, positions, 'raw', true));
+    const callback = (iteration: number) => {
+      const newProgress = iteration === positions.length - 1 ? 100 : 100 * (iteration + 1) / positions.length;
+      setProgress(newProgress);
+    };
+
+    dispatch(fetchImageFrames(imageId, positions, 'raw', true, callback));
   }
 
   if (image && image.fields) {
@@ -101,6 +107,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
         brightFieldSource={brightFieldSource}
         darkFieldSource={darkFieldSource}
         frameSource={frameSource}
+        progress={progress}
         colors={VIRIDIS}
         onSelectionChange={onSelectionChange}
         selection={selection}

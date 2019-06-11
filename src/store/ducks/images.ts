@@ -25,7 +25,7 @@ export const fetchImageField = createAction(FETCH_IMAGE_FIELD_REQUESTED, resolve
 export const fetchImageFieldSucceeded = createAction(FETCH_IMAGE_FIELD_SUCCEEDED, resolve => (imageId: string, fieldName: FieldName, data: ImageData) => resolve({imageId, fieldName, data}));
 export const fetchImageFieldFailed = createAction(FETCH_IMAGE_FIELD_FAILED, resolve => (error: any) => resolve(error));
 
-export const fetchImageFrames = createAction(FETCH_IMAGE_FRAMES_REQUESTED, resolve => (imageId: string, positions: number[], type: FrameType, cumulate: boolean) => resolve({imageId, positions, type, cumulate}));
+export const fetchImageFrames = createAction(FETCH_IMAGE_FRAMES_REQUESTED, resolve => (imageId: string, positions: number[], type: FrameType, cumulate: boolean, callback?: (i: number) => void) => resolve({imageId, positions, type, cumulate, callback}));
 export const fetchImageFrameSucceeded = createAction(FETCH_IMAGE_FRAME_SUCCEEDED, resolve => (imageId: string, position: number | 'cumulated', data: ImageData) => resolve({imageId, position, data}));
 export const fetchImageFrameFailed = createAction(FETCH_IMAGE_FRAME_FAILED, resolve => (error: any) => resolve(error));
 
