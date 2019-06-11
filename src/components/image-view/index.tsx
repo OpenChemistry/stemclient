@@ -1,6 +1,6 @@
 import React, {Fragment} from 'react';
 import {RGBColor} from '@colormap/core';
-import {Typography, Grid} from '@material-ui/core';
+import {Typography, Grid, LinearProgress} from '@material-ui/core';
 import { createStyles, WithStyles, Theme, withStyles } from '@material-ui/core/styles';
 
 import { ImageDataSource } from '../../stem-image/data';
@@ -16,6 +16,18 @@ const styles = (theme: Theme) => createStyles({
   },
   image: {
     marginBottom: theme.spacing(2)
+  },
+  progress: {
+    marginBottom: theme.spacing(1)
+  },
+  selection: {
+    fontSize: theme.spacing(2),
+    marginLeft: theme.spacing(4)
+  },
+  frameContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   }
 });
 
@@ -24,13 +36,14 @@ interface Props extends WithStyles<typeof styles> {
   brightFieldSource: ImageDataSource;
   darkFieldSource: ImageDataSource;
   frameSource: ImageDataSource;
+  progress: number;
   colors: RGBColor[];
   selection: Vec4;
   onSelectionChange?: (selection: Vec4) => void;
 }
 
 const ImageView: React.FC<Props> = ({
-  image, colors, onSelectionChange, classes,
+  image, colors, onSelectionChange, classes, progress,
   brightFieldSource, darkFieldSource, frameSource, selection
 }) => {
   return (
@@ -41,7 +54,7 @@ const ImageView: React.FC<Props> = ({
       <Grid container spacing={3}>
         <Grid item xs={6}>
           <Typography variant="h5" className={classes.title}>
-            Fields
+            Images
           </Typography>
           <div className={classes.image}>
             <STEMImage source={brightFieldSource} colors={colors}>
@@ -55,9 +68,19 @@ const ImageView: React.FC<Props> = ({
           </div>
         </Grid>
         <Grid item xs={6}>
-          <Typography variant="h5" className={classes.title}>
-            Frames
-          </Typography>
+          <div className={`${classes.frameContainer} ${classes.title}`}>
+            <Typography variant="h5">
+              Frames
+            </Typography>
+            <Typography color='textSecondary'>
+            {`position = (${selection[0]}, ${selection[2]}), width = ${selection[1] - selection[0]}, height = ${selection[3] - selection[2]}`}
+            </Typography>
+          </div>
+          {progress < 100 &&
+          <div className={classes.progress}>
+            <LinearProgress variant='determinate' value={progress}/>
+          </div>
+          }
           <STEMImage source={frameSource} colors={colors}/>
         </Grid>
       </Grid>

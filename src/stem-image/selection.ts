@@ -83,7 +83,7 @@ export class SquareSelection extends MultiSubjectProducer {
 
       const onMouseUp = (ev: MouseEvent) => {
         const imagePosition = mousePositionToImagePosition(ev, this.canvas);
-        const p1 = calculateP1(imagePosition, this.source.getImageSize(), p0, 1, 9);
+        const p1 = calculateP1(imagePosition, this.source.getImageSize(), p0, 1, 10);
         this.setSelection(p0, p1);
 
         this.emit('selectionChanged', {p0, p1});
@@ -95,7 +95,7 @@ export class SquareSelection extends MultiSubjectProducer {
       const onMouseMove = (ev: MouseEvent) => {
         const imagePosition = mousePositionToImagePosition(ev, this.canvas);
 
-        const newP1 = calculateP1(imagePosition, this.source.getImageSize(), p0, 1, 9);
+        const newP1 = calculateP1(imagePosition, this.source.getImageSize(), p0, 0, 10);
 
         if (newP1[0] !== p1[0] || newP1[1] !== p1[1]) {
           this.setSelection(p0, newP1);
@@ -137,9 +137,6 @@ export class SquareSelection extends MultiSubjectProducer {
     this.context.fillStyle = 'rgba(255, 255, 255, 0.2)';
     this.context.fillRect(x, y, width, height);
     this.context.strokeRect(x, y, width, height);
-    // this.context.rect(x, y, width, height);
-    // this.context.stroke();
-    // this.context.fill();
   }
 
   setSelection(p0: Vec2, p1: Vec2) {

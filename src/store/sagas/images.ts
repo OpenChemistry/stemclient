@@ -92,7 +92,7 @@ export function* watchFetchImageField() {
 }
 
 function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
-  const { imageId, positions, type, cumulate } = action.payload;
+  const { imageId, positions, type, cumulate, callback } = action.payload;
   try {
     const imageSize = yield call(fetchImageFrameSize, imageId, type);
 
@@ -109,7 +109,8 @@ function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
 
     let positionName: 'cumulated' | number;
 
-    for (let position of positions) {
+    for (let i in positions) {
+      const position = positions[i];
       const imageStream = yield call(fetchImageFrameRest, imageId, position, type);
       const imageFrame = yield call(extractImageData, imageStream, imageSize, type);
 
@@ -124,6 +125,9 @@ function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
         positionName = position;
       }
       yield put(fetchImageFrameSucceeded(imageId, positionName, imageData));
+      if (callback) {
+        callback(parseInt(i));
+      }
     }
   } catch(e) {
     yield put(fetchImageFrameFailed(e));
