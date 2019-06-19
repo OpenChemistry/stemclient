@@ -24,8 +24,8 @@ const positionsToParameters = (positions: Vec2[], size: ImageSize) : MaskParamet
   return {
     centerX: positions[0][0] - Math.floor(width / 2),
     centerY: Math.floor(height / 2) - positions[0][1],
-    minRadius: 0,
-    maxRadius: Math.round(calculateDistance(positions[0], positions[1]))
+    minRadius: Math.round(calculateDistance(positions[0], positions[1])),
+    maxRadius: Math.round(calculateDistance(positions[0], positions[2]))
   }
 }
 
@@ -39,12 +39,16 @@ const parametersToPositions = (parameters: MaskParameters, size: ImageSize) : Ve
   const centerPosition: Vec2 = [
     centerX + Math.floor(width / 2), Math.floor(height /2) - centerY
   ];
-  const radiusPosition : Vec2 = [
+  const innerRadiusPosition : Vec2 = [
+    centerPosition[0] + minRadius, centerPosition[1]
+  ];
+  const outerRadiusPosition : Vec2 = [
     centerPosition[0] + maxRadius, centerPosition[1]
   ];
   return [
     centerPosition,
-    radiusPosition
+    innerRadiusPosition,
+    outerRadiusPosition
   ];
 }
 
