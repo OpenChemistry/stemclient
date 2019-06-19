@@ -7,7 +7,7 @@ import { IStore } from '../../store';
 
 import { fetchImages, fetchImageField, fetchImageFrames, getImageById } from '../../store/ducks/images';
 import { StaticImageDataSource } from '../../stem-image/data';
-import { ImageSize, Vec4 } from '../../stem-image/types';
+import { ImageSize, Vec2 } from '../../stem-image/types';
 import ImageView from '../../components/image-view';
 
 interface OwnProps {};
@@ -22,7 +22,8 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   const [brightFieldSource] = useState(new StaticImageDataSource());
   const [darkFieldSource] = useState(new StaticImageDataSource());
   const [frameSource] = useState(new StaticImageDataSource());
-  const [selection, setSelection] = useState([0, 0, 0, 0] as Vec4);
+  const [selection, setSelection] = useState([[0, 0], [0, 0]] as Vec2[]);
+  const [mask, setMask] = useState([[0, 0], [0, 0]] as Vec2[]);
   const [progress, setProgress] = useState(100);
 
   let darkField : ImageData | undefined;
@@ -72,8 +73,13 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     }
   }, [rawFrame, frameSource]);
 
-  const onSelectionChange = (newSelection: Vec4) => {
-    setSelection(newSelection);
+  const onSelectionChange = (handlePositions: Vec2[]) => {
+    const orderedSelection : Vec2[] = [
+      [Math.min(handlePositions[0][0], handlePositions[1][0]), Math.min(handlePositions[0][1], handlePositions[1][1])],
+      [Math.max(handlePositions[0][0], handlePositions[1][0]), Math.max(handlePositions[0][1], handlePositions[1][1])]
+    ];
+
+    setSelection(orderedSelection);
 
     let size : ImageSize;
     if (brightField) {
@@ -85,8 +91,8 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     }
 
     const positions = [];
-    for (let i = newSelection[0]; i < newSelection[1]; ++i) {
-      for (let j = newSelection[2]; j < newSelection[3]; ++j) {
+    for (let i = orderedSelection[0][0]; i < orderedSelection[1][0]; ++i) {
+      for (let j = orderedSelection[0][1]; j < orderedSelection[1][1]; ++j) {
         const pixelIndex = j * size.width + i;
         positions.push(pixelIndex);
       }
@@ -100,6 +106,8 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     dispatch(fetchImageFrames(imageId, positions, 'raw', true, callback));
   }
 
+  const onMaskChange = (handlePositions: Vec2[]) => {};
+
   if (image && image.fields) {
     return (
       <ImageView
@@ -110,7 +118,9 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
         progress={progress}
         colors={VIRIDIS}
         onSelectionChange={onSelectionChange}
+        onMaskChange={onMaskChange}
         selection={selection}
+        mask={mask}
       />
     );
   } else {

@@ -1,37 +1,34 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImageDataSource } from '../../stem-image/data';
-import { SquareSelection } from '../../stem-image/selection';
-import { Vec2, Vec4 } from '../../stem-image/types';
+import { BaseSelection } from '../../stem-image/selection';
+import { Vec2 } from '../../stem-image/types';
 
 interface Props {
   source: ImageDataSource;
-  selection: [number, number, number, number];
-  onSelectionChange?: (selection: Vec4) => void;
+  selection: Vec2[];
+  selectionClass: new (parent: HTMLDivElement, source: ImageDataSource) => BaseSelection;
+  onChange?: (selection: Vec2[]) => void;
 }
 
-const SelectionOverlay : React.FC<Props> = ({source, selection, onSelectionChange}) => {
+const SelectionOverlay : React.FC<Props> = ({source, selection, selectionClass, onChange}) => {
 
   const containerRef = useRef(null);
-  const [imageSelection, setImageSelection] = useState(null as SquareSelection | null);
+  const [imageSelection, setImageSelection] = useState(null as BaseSelection | null);
 
-  const selectionObserver = ({p0, p1} : {p0: Vec2, p1: Vec2}) => {
-    const newSelection : Vec4 = [
-      Math.min(p0[0], p1[0]), Math.max(p0[0], p1[0]),
-      Math.min(p0[1], p1[1]), Math.max(p0[1], p1[1])
-    ];
-    if (onSelectionChange) {
-      onSelectionChange(newSelection);
+  const selectionObserver = (handlePositions: Vec2[]) => {
+    if (onChange) {
+      onChange(handlePositions);
     }
   }
 
   const updateSelection = () => {
     if (imageSelection) {
-      imageSelection!.setSelection([selection[0], selection[2]], [selection[1], selection[3]]);
+      imageSelection!.setHandles(selection);
     }
   }
 
   useEffect(() => {
-    setImageSelection(new SquareSelection(containerRef.current!, source));
+    setImageSelection(new selectionClass(containerRef.current!, source));
   }, [source, setImageSelection]);
 
   useEffect(() => {

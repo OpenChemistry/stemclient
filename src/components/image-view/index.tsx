@@ -4,11 +4,12 @@ import {Typography, Grid, LinearProgress} from '@material-ui/core';
 import { createStyles, WithStyles, Theme, withStyles } from '@material-ui/core/styles';
 
 import { ImageDataSource } from '../../stem-image/data';
-import { Vec4 } from '../../stem-image/types';
+import { Vec2 } from '../../stem-image/types';
 import STEMImage from '../stem-image';
 import Overlay from '../overlay';
 import SelectionOverlay from '../selection-overlay';
 import { IImage } from '../../types';
+import { SquareSelection, CircleSelection } from '../../stem-image/selection';
 
 const styles = (theme: Theme) => createStyles({
   title: {
@@ -38,13 +39,15 @@ interface Props extends WithStyles<typeof styles> {
   frameSource: ImageDataSource;
   progress: number;
   colors: RGBColor[];
-  selection: Vec4;
-  onSelectionChange?: (selection: Vec4) => void;
+  selection: Vec2[];
+  mask: Vec2[];
+  onSelectionChange?: (handlePositions: Vec2[]) => void;
+  onMaskChange?: (handlePositions: Vec2[]) => void;
 }
 
 const ImageView: React.FC<Props> = ({
-  image, colors, onSelectionChange, classes, progress,
-  brightFieldSource, darkFieldSource, frameSource, selection
+  image, colors, onSelectionChange, onMaskChange, classes, progress,
+  brightFieldSource, darkFieldSource, frameSource, selection, mask
 }) => {
   return (
     <Fragment>
@@ -58,12 +61,12 @@ const ImageView: React.FC<Props> = ({
           </Typography>
           <div className={classes.image}>
             <STEMImage source={brightFieldSource} colors={colors}>
-              <SelectionOverlay source={brightFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+              <SelectionOverlay source={brightFieldSource} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
             </STEMImage>
           </div>
           <div className={classes.image}>
             <STEMImage source={darkFieldSource} colors={colors}>
-              <SelectionOverlay source={darkFieldSource} selection={selection} onSelectionChange={onSelectionChange}/>
+              <SelectionOverlay source={darkFieldSource} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
             </STEMImage>
           </div>
         </Grid>
@@ -73,7 +76,7 @@ const ImageView: React.FC<Props> = ({
               Frames
             </Typography>
             <Typography color='textSecondary'>
-            {`position = (${selection[0]}, ${selection[2]}), width = ${selection[1] - selection[0]}, height = ${selection[3] - selection[2]}`}
+            {`position = (${selection[0][0]}, ${selection[0][1]}), width = ${selection[1][0] - selection[0][0]}, height = ${selection[1][1] - selection[0][1]}`}
             </Typography>
           </div>
           {progress < 100 &&
@@ -81,7 +84,9 @@ const ImageView: React.FC<Props> = ({
             <LinearProgress variant='determinate' value={progress}/>
           </div>
           }
-          <STEMImage source={frameSource} colors={colors}/>
+          <STEMImage source={frameSource} colors={colors}>
+            <SelectionOverlay source={frameSource} selection={mask} onChange={onMaskChange} selectionClass={CircleSelection}/>
+          </STEMImage>
         </Grid>
       </Grid>
     </Fragment>
