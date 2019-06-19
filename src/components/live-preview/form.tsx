@@ -28,9 +28,10 @@ interface Props extends WithStyles<typeof styles> {
   initialValues: {[fieldName: string]: string};
   onSubmit: (values: {[fieldName: string]: any}) => void;
   disabled?: boolean;
+  submitLabel?: string;
 }
 
-const FormComponent : React.FC<Props> = ({fields, initialValues, onSubmit, disabled, classes}) => {
+const FormComponent : React.FC<Props> = ({fields, initialValues, onSubmit, disabled, submitLabel, classes}) => {
   return (
     <Form
       onSubmit={onSubmit}
@@ -66,7 +67,7 @@ const FormComponent : React.FC<Props> = ({fields, initialValues, onSubmit, disab
             type='submit' disabled={invalid || disabled}
             className={classes.button}
             variant='contained' color='secondary'
-          >Submit</Button>
+          >{submitLabel ? submitLabel : 'Submit'}</Button>
         </form>
       )}
     >
