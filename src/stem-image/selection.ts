@@ -58,7 +58,7 @@ const imageToCanvas = (imagePosition: Vec2, size: ImageSize) : Vec2 => {
   return p1;
 }
 
-const calculateDistance = (p0: number[], p1: number[]) : number => {
+export const calculateDistance = (p0: number[], p1: number[]) : number => {
   if (p0.length !== p1.length) {
     return -1;
   }
@@ -97,39 +97,38 @@ class BaseHandle {
     this.colorId = colorId;
   }
 
-  draw(_drawContext: CanvasRenderingContext2D, _interactionContext: CanvasRenderingContext2D, _xScale: Scale, _yScale: Scale) {}
+  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, _xScale: Scale, _yScale: Scale) {
+    drawContext.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+    drawContext.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    interactionContext.fillStyle = `rgb(${this.colorId}, ${this.colorId}, ${this.colorId})`;
+  }
 }
 
 class SquareHandle extends BaseHandle {
   draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale) {
+    super.draw(drawContext, interactionContext, xScale, yScale);
     const size = 8;
     const x = xScale(this.getPosition()[0]) - size / 2;
-    const y = xScale(this.getPosition()[1]) - size / 2;
+    const y = yScale(this.getPosition()[1]) - size / 2;
 
-    drawContext.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-    drawContext.fillStyle = 'rgba(255, 255, 255, 0.8)';
     drawContext.fillRect(x, y, size, size);
     drawContext.strokeRect(x, y, size, size);
-
-    interactionContext.fillStyle = `rgb(${this.colorId}, ${this.colorId}, ${this.colorId})`;
     interactionContext.fillRect(x, y, size, size);
   }
 }
 
 class CircleHandle extends BaseHandle {
   draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale) {
+    super.draw(drawContext, interactionContext, xScale, yScale);
     const size = 8;
     const x = xScale(this.getPosition()[0]);
-    const y = xScale(this.getPosition()[1]);
+    const y = yScale(this.getPosition()[1]);
 
-    drawContext.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-    drawContext.fillStyle = 'rgba(255, 255, 255, 0.8)';
     drawContext.beginPath();
     drawContext.arc(x, y, size / 2, 0, 2 * Math.PI);
     drawContext.fill();
     drawContext.stroke();
 
-    interactionContext.fillStyle = `rgb(${this.colorId}, ${this.colorId}, ${this.colorId})`;
     interactionContext.beginPath();
     interactionContext.arc(x, y, size / 2, 0, 2 * Math.PI);
     interactionContext.fill();

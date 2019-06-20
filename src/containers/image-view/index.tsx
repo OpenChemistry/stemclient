@@ -106,7 +106,9 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
     dispatch(fetchImageFrames(imageId, positions, 'raw', true, callback));
   }
 
-  const onMaskChange = (handlePositions: Vec2[]) => {};
+  const onMaskChange = (handlePositions: Vec2[]) => {
+    setMask(handlePositions);
+  };
 
   if (image && image.fields) {
     return (
