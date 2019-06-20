@@ -58,7 +58,8 @@ export class BaseImageDataSource extends MultiSubjectProducer {
     let max = Number.NEGATIVE_INFINITY;
     for (let i = 0; i < this.data.length; ++i) {
       const value = this.data[i];
-      if (value < min) {
+      // For now exclude 0, so we can see the chunks come in.
+      if (value < min && value > 0) {
         min = value;
       }
       if (value > max) {
