@@ -23,7 +23,7 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
   const [darkFieldSource] = useState(new StaticImageDataSource());
   const [frameSource] = useState(new StaticImageDataSource());
   const [selection, setSelection] = useState([[0, 0], [0, 0]] as Vec2[]);
-  const [mask, setMask] = useState([[0, 0], [0, 0]] as Vec2[]);
+  const [mask, setMask] = useState([[0, 0], [0, 0], [0, 0]] as Vec2[]);
   const [progress, setProgress] = useState(100);
 
   let darkField : ImageData | undefined;

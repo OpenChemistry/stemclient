@@ -78,6 +78,10 @@ const normalize = (vec: number[], length: number = 1) : number[] => {
   return vec.map(val => scale * val);
 }
 
+const addVec = (vec: number[], other: number[], factor: number = 1) : number[] => {
+  return vec.map((value, i) => value + factor * other[i]);
+}
+
 class BaseHandle {
   constructor(protected colorId: number, protected position: Vec2 = [0, 0]) {}
 
@@ -234,10 +238,7 @@ export class BaseSelection extends MultiSubjectProducer {
 
   setHandles(positions: Vec2[]) {
     const handles = Object.values(this.handles);
-    if (positions.length > handles.length) {
-      return;
-    }
-    for (let i in handles) {
+    for (let i = 0; i < Math.min(positions.length, handles.length); ++i) {
       handles[i].setPosition(positions[i]);
     }
     this.draw();
@@ -367,14 +368,17 @@ export class SquareSelection extends BaseSelection {
 
 export class CircleSelection extends BaseSelection {
   private centerHandle: BaseHandle;
-  private radiusHandle: BaseHandle;
+  private innerRadiusHandle: BaseHandle;
+  private outerRadiusHandle: BaseHandle;
 
   constructor(parent: HTMLDivElement, source: ImageDataSource) {
     super(parent, source);
     this.centerHandle = new SquareHandle(0, [0, 0]);
-    this.radiusHandle = new CircleHandle(1, [0, 0]);
+    this.innerRadiusHandle = new CircleHandle(1, [0, 0]);
+    this.outerRadiusHandle = new CircleHandle(2, [0, 0]);
     this.handles[0] = this.centerHandle;
-    this.handles[1] = this.radiusHandle;
+    this.handles[1] = this.innerRadiusHandle;
+    this.handles[2] = this.outerRadiusHandle;
   }
 
   onMouseDown(position: Vec2, colorId: number, hit: boolean) {
@@ -395,9 +399,10 @@ export class CircleSelection extends BaseSelection {
       ];
 
       this.centerHandle.setPosition(center);
-      this.radiusHandle.setPosition(center);
+      this.innerRadiusHandle.setPosition(center);
+      this.outerRadiusHandle.setPosition(center);
 
-      this.moving = this.radiusHandle;
+      this.moving = this.outerRadiusHandle;
       this.draw();
     }
   }
@@ -416,11 +421,12 @@ export class CircleSelection extends BaseSelection {
         Math.round(position[1] * height)
       ];
       if (newCenter[0] !== oldCenter[0] || newCenter[1] !== oldCenter[1]) {
-        const radiusPosition = [...this.radiusHandle.getPosition()] as Vec2;
-        radiusPosition[0] += newCenter[0] - oldCenter[0];
-        radiusPosition[1] += newCenter[1] - oldCenter[1];
+        const translation = addVec(newCenter, oldCenter, -1);
+        const innerPosition = addVec(this.innerRadiusHandle.getPosition(), translation);
+        const outerPosition = addVec(this.outerRadiusHandle.getPosition(), translation);
         this.centerHandle.setPosition(newCenter);
-        this.radiusHandle.setPosition(radiusPosition);
+        this.innerRadiusHandle.setPosition(innerPosition as Vec2);
+        this.outerRadiusHandle.setPosition(outerPosition as Vec2);
         this.draw();
       }
     } else {
@@ -429,11 +435,16 @@ export class CircleSelection extends BaseSelection {
         position[0] * width,
         position[1] * height
       ];
-      let diff = this.centerHandle.getPosition().map((c, i) => radiusPosition[i] - c);
-      const distance = Math.round(calculateDistance(center, radiusPosition));
+      let diff = addVec(radiusPosition, center, -1);
+      let distance = Math.round(calculateDistance(center, radiusPosition));
+      if (this.moving === this.innerRadiusHandle) {
+        distance = Math.min(distance, calculateDistance(center, this.outerRadiusHandle.getPosition()));
+      } else if (this.moving === this.outerRadiusHandle) {
+        distance = Math.max(distance, calculateDistance(center, this.innerRadiusHandle.getPosition()));
+      }
       diff = normalize(diff, distance);
-      radiusPosition = this.centerHandle.getPosition().map((c, i) => c + diff[i]) as Vec2;
-      this.radiusHandle.setPosition(radiusPosition);
+      radiusPosition = addVec(center, diff) as Vec2;
+      this.moving.setPosition(radiusPosition);
       this.draw();
     }
   }
@@ -448,27 +459,35 @@ export class CircleSelection extends BaseSelection {
   draw() {
     super.draw();
 
-    if (!this.centerHandle || !this.radiusHandle) {
+    if (!this.centerHandle || !this.innerRadiusHandle || !this.outerRadiusHandle) {
       return;
     }
 
     const center = this.centerHandle.getPosition();
-    const radius = calculateDistance(center, this.radiusHandle.getPosition());
+    const innerRadius = calculateDistance(center, this.innerRadiusHandle.getPosition());
+    const outerRadius = calculateDistance(center, this.outerRadiusHandle.getPosition());
 
     const x = this.xScale(center[0]);
     const y = this.yScale(center[1]);
-    const r = this.xScale(radius);
+    const r0 = this.xScale(innerRadius);
+    const r1 = this.xScale(outerRadius);
 
     this.drawContext.strokeStyle = 'rgb(255, 0, 0)';
     this.drawContext.fillStyle = 'rgba(255, 255, 255, 0.2)';
     this.drawContext.beginPath();
-    this.drawContext.arc(x, y, r, 0, 2 * Math.PI);
-    this.drawContext.fill();
+    this.drawContext.arc(x, y, r0, 0, 2 * Math.PI);
     this.drawContext.stroke();
+    this.drawContext.closePath();
+    this.drawContext.arc(x, y, r1, 0, 2 * Math.PI);
+    this.drawContext.fill('evenodd');
+    this.drawContext.beginPath();
+    this.drawContext.arc(x, y, r1, 0, 2 * Math.PI);
+    this.drawContext.stroke();
+    this.drawContext.closePath();
 
     this.interactionContext.fillStyle = 'rgba(255, 255, 255, 255)';
     this.interactionContext.beginPath();
-    this.interactionContext.arc(x, y, r, 0, 2 * Math.PI);
+    this.interactionContext.arc(x, y, r1, 0, 2 * Math.PI);
     this.interactionContext.fill();
 
     this.drawHandles();
