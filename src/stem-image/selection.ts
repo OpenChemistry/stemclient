@@ -101,16 +101,17 @@ class BaseHandle {
     this.colorId = colorId;
   }
 
-  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, _xScale: Scale, _yScale: Scale) {
-    drawContext.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-    drawContext.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, _xScale: Scale, _yScale: Scale, opacity: number) {
+    drawContext.strokeStyle = `rgba(0, 0, 0, ${opacity})`;
+    drawContext.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    interactionContext.strokeStyle = 'rgba(0, 0, 0, 0)';
     interactionContext.fillStyle = `rgb(${this.colorId}, ${this.colorId}, ${this.colorId})`;
   }
 }
 
 class SquareHandle extends BaseHandle {
-  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale) {
-    super.draw(drawContext, interactionContext, xScale, yScale);
+  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale, opacity: number) {
+    super.draw(drawContext, interactionContext, xScale, yScale, opacity);
     const size = 8;
     const x = xScale(this.getPosition()[0]) - size / 2;
     const y = yScale(this.getPosition()[1]) - size / 2;
@@ -122,8 +123,8 @@ class SquareHandle extends BaseHandle {
 }
 
 class CircleHandle extends BaseHandle {
-  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale) {
-    super.draw(drawContext, interactionContext, xScale, yScale);
+  draw(drawContext: CanvasRenderingContext2D, interactionContext: CanvasRenderingContext2D, xScale: Scale, yScale: Scale, opacity: number) {
+    super.draw(drawContext, interactionContext, xScale, yScale, opacity);
     const size = 8;
     const x = xScale(this.getPosition()[0]);
     const y = yScale(this.getPosition()[1]);
@@ -150,6 +151,7 @@ export class BaseSelection extends MultiSubjectProducer {
   yScale: Scale = linearScale([0, 1], [0, 1]);
   handles: {[colorId: number]: BaseHandle} = {};
   moving?: BaseHandle;
+  overHandle: boolean = false;
 
   constructor(private parent: HTMLDivElement, protected source: ImageDataSource) {
     super();
@@ -179,6 +181,18 @@ export class BaseSelection extends MultiSubjectProducer {
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
 
+    // Detect hovering on the handles
+    this.drawCanvas.addEventListener('mousemove', (ev) => {
+      const imagePosition = mousePositionToImagePosition(ev, this.drawCanvas);
+      const color = positionToColor(imagePosition, this.interactionCanvas);
+      const overHandle = color[3] === 255 && color[0] !== 255;
+      if (this.overHandle !== overHandle) {
+        this.overHandle = overHandle;
+        this.draw();
+      }
+    });
+
+    // Detect dragging the handles
     this.drawCanvas.addEventListener('mousedown', (ev) => {
       const imagePosition = mousePositionToImagePosition(ev, this.drawCanvas);
       const color = positionToColor(imagePosition, this.interactionCanvas);
@@ -231,8 +245,9 @@ export class BaseSelection extends MultiSubjectProducer {
   }
 
   drawHandles() {
+    const opacity = this.overHandle ? 0.8 : 0.3;
     for (let handle of Object.values(this.handles)) {
-      handle.draw(this.drawContext, this.interactionContext, this.xScale, this.yScale);
+      handle.draw(this.drawContext, this.interactionContext, this.xScale, this.yScale, opacity);
     }
   }
 
