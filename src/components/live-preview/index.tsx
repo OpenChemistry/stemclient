@@ -35,6 +35,12 @@ interface State {
   fieldValues: {[fieldName: string]: string};
   workers: string[];
   open: boolean;
+  pipelineId: string;
+}
+
+interface Pipeline {
+  pipelineId: string;
+  workerId: string
 }
 
 class LivePreviewComponent extends Component<Props> {
@@ -43,7 +49,8 @@ class LivePreviewComponent extends Component<Props> {
     connecting: false,
     fieldValues: {},
     workers: [],
-    open: false
+    open: false,
+    pipelineId: ''
   }
   connection: StreamConnection;
   brightSource: StreamImageDataSource;
@@ -53,13 +60,17 @@ class LivePreviewComponent extends Component<Props> {
     super(props);
     this.connection = new StreamConnection();
     this.brightSource = new StreamImageDataSource();
-    this.brightSource.setConnection(this.connection, 'stem.size', 'stem.bright');
+    this.brightSource.setConnection(this.connection, 'stem.size', 'stem.pipeline.executed');
     this.darkSource = new StreamImageDataSource();
     this.darkSource.setConnection(this.connection, 'stem.size', 'stem.dark');
     this.generateImage = this.generateImage.bind(this);
     this.onReceiveWorkers = this.onReceiveWorkers.bind(this);
     this.connectSocket = this.connectSocket.bind(this);
     this.connection.subscribe('stem.workers', this.onReceiveWorkers);
+    this.onPipelineCreated = this.onPipelineCreated.bind(this);
+    this.connection.subscribe('stem.pipeline.created', this.onPipelineCreated);
+    this.onPipelineExecuted = this.onPipelineExecuted.bind(this);
+    this.connection.subscribe('stem.pipeline.executed', this.onPipelineExecuted);
   }
 
   componentDidMount() {
@@ -117,6 +128,31 @@ class LivePreviewComponent extends Component<Props> {
     });
   }
 
+  onPipelineCreated(pipeline: Pipeline) {
+    const executeParams = {
+      pipelineId: pipeline.pipelineId,
+      workerId: pipeline.workerId,
+      params: this.state.fieldValues
+    }
+    this.setState((state: State) => {
+      state.pipelineId = pipeline.pipelineId;
+
+      return state;
+    });
+
+    this.connection.socket.emit('stem.pipeline.execute', executeParams);
+  }
+
+  onPipelineExecuted(result: any) {
+    const deleteParams = {
+      pipelineId: this.state.pipelineId,
+    }
+    if (result.rank == 0) {
+      this.connection.socket.emit('stem.pipeline.delete', deleteParams);
+    }
+  }
+
+
   disconnectSocket() {
     this.connection.disconnect();
   }
@@ -126,7 +162,17 @@ class LivePreviewComponent extends Component<Props> {
       state.fieldValues = {...params};
       return state;
     })
-    this.connection.socket.emit('stem.execute', params);
+    // For now we just pick the first worker.
+    const workerId = Object.keys(this.state.workers)[0];
+    // For now just run annular pipeline.
+    const createParams = {
+            name: 'annular',
+            workerId
+    };
+    // Reset the the image.
+    this.connection.emit('stem.size', {width: 1, height: 1});
+    this.connection.socket.emit('stem.pipeline.create', createParams);
+
   }
 
   render() {
