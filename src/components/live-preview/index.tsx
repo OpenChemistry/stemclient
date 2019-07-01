@@ -33,12 +33,29 @@ interface State {
   connected: boolean;
   connecting: boolean;
   fieldValues: {[fieldName: string]: string};
-  workers: string[];
+  workers: Workers;
   open: boolean;
   pipelineId: string;
+  selectedWorker: string;
+  selectedPipeline: string;
 }
 
 interface Pipeline {
+  name: string;
+  description: string;
+  displayName: string;
+}
+
+interface Worker {
+  pipelines: {[pipelineName: string]: Pipeline};
+  ranks: {[rank: number]: string};
+}
+
+export interface Workers {
+  [workerId: string]: Worker;
+}
+
+interface PipelineInstance {
   pipelineId: string;
   workerId: string
 }
@@ -48,9 +65,11 @@ class LivePreviewComponent extends Component<Props> {
     connected: false,
     connecting: false,
     fieldValues: {},
-    workers: [],
+    workers: {},
     open: false,
-    pipelineId: ''
+    pipelineId: '',
+    selectedWorker: 'none',
+    selectedPipeline: 'none'
   }
   connection: StreamConnection;
   brightSource: StreamImageDataSource;
@@ -70,6 +89,9 @@ class LivePreviewComponent extends Component<Props> {
     this.onPipelineCreated = this.onPipelineCreated.bind(this);
     this.connection.subscribe('stem.pipeline.created', this.onPipelineCreated);
     this.onPipelineExecuted = this.onPipelineExecuted.bind(this);
+    this.onWorkerChange = this.onWorkerChange.bind(this);
+    this.onPipelineChange = this.onPipelineChange.bind(this);
+    this.onAddWorker = this.onAddWorker.bind(this);
     this.connection.subscribe('stem.pipeline.executed', this.onPipelineExecuted);
   }
 
@@ -115,20 +137,52 @@ class LivePreviewComponent extends Component<Props> {
       this.setState((state: State) => {
         state.connected = false;
         state.connecting = false;
-        state.workers = [];
+        state.workers = {};
         return state;
       });
     });
   }
 
-  onReceiveWorkers(workers: string[]) {
+  onReceiveWorkers(workers: Workers) {
+    let { selectedWorker, selectedPipeline } = this.state;
+    if (!workers[selectedWorker]) {
+      const workerIds = Object.keys(workers);
+      selectedWorker = workerIds.length > 0 ? workerIds[0] : 'none';
+    }
+
+    if (!workers[selectedWorker] || !workers[selectedWorker].pipelines) {
+      selectedPipeline = 'none';
+    } else if (!workers[selectedWorker].pipelines[selectedPipeline]) {
+      const pipelineIds = Object.keys(workers[selectedWorker].pipelines);
+      selectedPipeline = pipelineIds.length > 0 ? pipelineIds[0] : 'none';
+    }
+
     this.setState((state: State) => {
       state.workers = workers;
+      state.selectedWorker = selectedWorker;
+      state.selectedPipeline = selectedPipeline;
       return state;
     });
   }
 
-  onPipelineCreated(pipeline: Pipeline) {
+  onWorkerChange(workerId: string) {
+    this.setState((state: State) => {
+      state.selectedWorker = workerId;
+      return state;
+    });
+  }
+
+  onPipelineChange(pipelineName: string) {
+    this.setState((state: State) => {
+      state.selectedPipeline = pipelineName;
+      return state;
+    });
+  }
+
+  onAddWorker() {
+  }
+
+  onPipelineCreated(pipeline: PipelineInstance) {
     const executeParams = {
       pipelineId: pipeline.pipelineId,
       workerId: pipeline.workerId,
@@ -158,16 +212,15 @@ class LivePreviewComponent extends Component<Props> {
   }
 
   generateImage(params: {[name: string]: any}) {
+    const { selectedWorker, selectedPipeline } = this.state;
     this.setState((state: State) => {
       state.fieldValues = {...params};
       return state;
     })
-    // For now we just pick the first worker.
-    const workerId = Object.keys(this.state.workers)[0];
-    // For now just run annular pipeline.
+
     const createParams = {
-            name: 'annular',
-            workerId
+            name: selectedPipeline,
+            workerId: selectedWorker
     };
     // Reset the the image.
     this.connection.emit('stem.size', {width: 1, height: 1});
@@ -177,7 +230,10 @@ class LivePreviewComponent extends Component<Props> {
 
   render() {
     const { classes } = this.props;
-    const {connected, connecting, workers, open, fieldValues} = this.state;
+    const {
+      connected, connecting, workers, open, fieldValues,
+      selectedWorker, selectedPipeline
+    } = this.state;
     const fields = [
       {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
       {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
@@ -200,13 +256,18 @@ class LivePreviewComponent extends Component<Props> {
         <div className={classes.row}>
           <StatusBar
             serverStatus={connecting ? 'pending' : connected ? 'online' : 'offline'}
-            workerStatus={workers.length > 0 ? 'online' : 'offline'}
+            workers={workers}
             onServerRefresh={this.connectSocket}
+            selectedWorker={selectedWorker}
+            onWorkerChange={this.onWorkerChange}
+            onAddWorker={this.onAddWorker}
+            selectedPipeline={selectedPipeline}
+            onPipelineChange={this.onPipelineChange}
           />
         </div>
         <Button
           className={classes.row}
-          variant='contained' color='secondary' disabled={workers.length < 1}
+          variant='contained' color='secondary' disabled={Object.keys(workers).length < 1}
           onClick={() => {this.setState({open: true})}}
         >
           Generate Image
@@ -214,7 +275,7 @@ class LivePreviewComponent extends Component<Props> {
         <Dialog open={open} onClose={() => {this.setState({open: false})}}>
           <DialogTitle>Generate Image</DialogTitle>
           <DialogContent>
-            <FormComponent fields={fields} initialValues={initialValues} disabled={workers.length < 1} onSubmit={(values) => {this.setState({open: false}); this.generateImage(values)}}/>
+            <FormComponent fields={fields} initialValues={initialValues} disabled={Object.keys(workers).length < 1} onSubmit={(values) => {this.setState({open: false}); this.generateImage(values)}}/>
           </DialogContent>
         </Dialog>
         {connected &&

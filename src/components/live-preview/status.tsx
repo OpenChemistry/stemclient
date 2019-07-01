@@ -1,8 +1,10 @@
 import React from 'react';
-import { Typography, IconButton } from '@material-ui/core';
+import { Typography, IconButton, Select, MenuItem } from '@material-ui/core';
 import { red, green, yellow, grey } from '@material-ui/core/colors';
 import {  WithStyles, Theme, withStyles, createStyles } from '@material-ui/core/styles';
 import RefreshIcon from '@material-ui/icons/Refresh';
+import AddIcon from '@material-ui/icons/Add';
+import { Workers } from '.';
 
 type ConnectionStatus = 'online' | 'offline' | 'pending';
 
@@ -33,11 +35,19 @@ const styles = (theme: Theme) => createStyles({
 interface Props extends WithStyles<typeof styles> {
   serverStatus: ConnectionStatus;
   onServerRefresh?: () => void;
-  workerStatus: ConnectionStatus;
-  onWorkerRefresh?: () => void;
+  workers: Workers;
+  selectedWorker: string;
+  onAddWorker?: () => void;
+  onWorkerChange?: (workerId: string) => void;
+  selectedPipeline: string;
+  onPipelineChange?: (pipelineName: string) => void;
 }
 
-const StatusBar : React.FC<Props> = ({serverStatus, workerStatus, onServerRefresh, onWorkerRefresh, classes}) => {
+const StatusBar : React.FC<Props> = ({
+  serverStatus, onServerRefresh, classes,
+  workers, selectedWorker, selectedPipeline,
+  onWorkerChange, onPipelineChange, onAddWorker
+}) => {
   const formatStatus = (status: ConnectionStatus) => {
     let className: string;
     let label: string;
@@ -66,6 +76,20 @@ const StatusBar : React.FC<Props> = ({serverStatus, workerStatus, onServerRefres
 
     return (<span className={className}>{label}</span>)
   }
+
+  const pipelines = workers[selectedWorker] ? workers[selectedWorker].pipelines || {} : {};
+
+  const onSelectChange = (callback: undefined | ((value: string) => void)) : React.ChangeEventHandler<{
+      name?: string | undefined;
+      value: unknown;
+  }> => {
+    return (e) => {
+      if (callback) {
+        callback(e.target.value as string);
+      }
+    }
+  }
+
   return (
     <div className={classes.root}>
       <div className={classes.item}>
@@ -77,12 +101,35 @@ const StatusBar : React.FC<Props> = ({serverStatus, workerStatus, onServerRefres
         }
       </div>
       <div className={classes.item}>
-        <Typography component='span'>Worker: {formatStatus(workerStatus)}</Typography>
-        {onWorkerRefresh &&
-        <IconButton onClick={onWorkerRefresh} disabled={workerStatus !== 'offline'} size='small'>
-          <RefreshIcon fontSize='inherit' />
-        </IconButton>
-        }
+        <Typography component='span'>Worker:&nbsp;</Typography>
+        <Select value={selectedWorker} onChange={onSelectChange(onWorkerChange)}>
+            <MenuItem value="none"><em>None</em></MenuItem>
+            {
+              Object.entries(workers).map(([workerId, worker]) => (
+                <MenuItem value={workerId} key={workerId}>
+                  {`${workerId.slice(workerId.length - 6, workerId.length)} (${Object.keys(worker.ranks).length} nodes)`}
+                </MenuItem>
+              ))
+            }
+          </Select>
+          {onAddWorker &&
+          <IconButton onClick={onAddWorker} disabled={serverStatus !== 'online'} size='small'>
+            <AddIcon fontSize='inherit' />
+          </IconButton>
+          }
+      </div>
+      <div className={classes.item}>
+        <Typography component='span'>Pipeline:&nbsp;</Typography>
+        <Select value={selectedPipeline} onChange={onSelectChange(onPipelineChange)}>
+            <MenuItem value="none"><em>None</em></MenuItem>
+            {
+              Object.values(pipelines).map(({name, displayName}) => (
+                <MenuItem value={name} key={name}>
+                  {displayName}
+                </MenuItem>
+              ))
+            }
+          </Select>
       </div>
     </div>
   );
