@@ -1,4 +1,4 @@
-import { combineReducers, applyMiddleware, createStore } from 'redux';
+import { combineReducers, applyMiddleware, createStore, compose } from 'redux';
 import { createBrowserHistory } from 'history'
 import { connectRouter, routerMiddleware } from 'connected-react-router'
 import loggerMiddleware from 'redux-logger';
@@ -34,10 +34,22 @@ middlewares.push(sagaMiddleware);
 middlewares.push(routerMiddleware(history));
 middlewares.push(loggerMiddleware);
 
+let windowAsAny = window as any;
+const composeEnhancers =
+  typeof windowAsAny === 'object' &&
+  windowAsAny.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
+    windowAsAny.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+      // Specify extension’s options like name, actionsBlacklist, actionsCreators, serialize...
+    }) : compose;
+
+const enhancer = composeEnhancers(
+  applyMiddleware(...middlewares),
+  // other store enhancers if any
+);
+
 const store = createStore(
   rootReducer,
-  (window as any).__REDUX_DEVTOOLS_EXTENSION__ && (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
-  applyMiddleware(...middlewares)
+  enhancer
 );
 
 sagaMiddleware.run(rootSaga);
