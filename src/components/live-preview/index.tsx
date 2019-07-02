@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { VIRIDIS } from '@colormap/presets';
-import { Button, Dialog, DialogTitle, DialogContent } from '@material-ui/core';
+import { Button } from '@material-ui/core';
 import { createStyles, withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 
 import { StreamImageDataSource } from '../../stem-image/data';
@@ -9,6 +9,8 @@ import STEMImage from '../stem-image';
 import FormComponent from './form';
 import { composeValidators, requiredValidator, integerValidator } from '../../utils/forms';
 import StatusBar from './status';
+import Dialog from './dialog';
+import AddWorker from './add-worker';
 
 const styles = (theme: Theme) => createStyles({
   root: {
@@ -27,6 +29,7 @@ const styles = (theme: Theme) => createStyles({
 
 interface Props extends WithStyles<typeof styles> {
   loggedIn: boolean;
+  apiKey: string;
 }
 
 interface State {
@@ -34,7 +37,8 @@ interface State {
   connecting: boolean;
   fieldValues: {[fieldName: string]: string};
   workers: Workers;
-  open: boolean;
+  openPipelineForm: boolean;
+  openAddWorker: boolean;
   pipelineId: string;
   selectedWorker: string;
   selectedPipeline: string;
@@ -66,7 +70,8 @@ class LivePreviewComponent extends Component<Props> {
     connecting: false,
     fieldValues: {},
     workers: {},
-    open: false,
+    openPipelineForm: false,
+    openAddWorker: false,
     pipelineId: '',
     selectedWorker: 'none',
     selectedPipeline: 'none'
@@ -180,6 +185,7 @@ class LivePreviewComponent extends Component<Props> {
   }
 
   onAddWorker() {
+    this.setState({openAddWorker: true});
   }
 
   onPipelineCreated(pipeline: PipelineInstance) {
@@ -229,10 +235,10 @@ class LivePreviewComponent extends Component<Props> {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, apiKey } = this.props;
     const {
-      connected, connecting, workers, open, fieldValues,
-      selectedWorker, selectedPipeline
+      connected, connecting, workers, fieldValues,
+      selectedWorker, selectedPipeline, openPipelineForm, openAddWorker
     } = this.state;
     const fields = [
       {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
@@ -268,16 +274,10 @@ class LivePreviewComponent extends Component<Props> {
         <Button
           className={classes.row}
           variant='contained' color='secondary' disabled={Object.keys(workers).length < 1}
-          onClick={() => {this.setState({open: true})}}
+          onClick={() => {this.setState({openPipelineForm: true})}}
         >
           Generate Image
         </Button>
-        <Dialog open={open} onClose={() => {this.setState({open: false})}}>
-          <DialogTitle>Generate Image</DialogTitle>
-          <DialogContent>
-            <FormComponent fields={fields} initialValues={initialValues} disabled={Object.keys(workers).length < 1} onSubmit={(values) => {this.setState({open: false}); this.generateImage(values)}}/>
-          </DialogContent>
-        </Dialog>
         {connected &&
         <Fragment>
           <div className={classes.imageContainer}>
@@ -290,6 +290,10 @@ class LivePreviewComponent extends Component<Props> {
           </div>
         </Fragment>
         }
+        <Dialog open={openPipelineForm} onClose={() => {this.setState({openPipelineForm: false})}} title='Generate Image'>
+          <FormComponent fields={fields} initialValues={initialValues} disabled={Object.keys(workers).length < 1} onSubmit={(values) => {this.setState({openPipelineForm: false}); this.generateImage(values)}}/>
+        </Dialog>
+        <AddWorker open={openAddWorker} onClose={() => {this.setState({openAddWorker: false})}} apiKey={apiKey}/>
       </div>
     )
   }
