@@ -59,7 +59,8 @@ export interface Workers {
   [workerId: string]: Worker;
 }
 
-interface PipelineInstance {
+interface PipelineCreatedReply {
+  id: string,
   pipelineId: string;
   workerId: string
 }
@@ -188,7 +189,7 @@ class LivePreviewComponent extends Component<Props> {
     this.setState({openAddWorker: true});
   }
 
-  onPipelineCreated(pipeline: PipelineInstance) {
+  onPipelineCreated(pipeline: PipelineCreatedReply) {
     const executeParams = {
       pipelineId: pipeline.pipelineId,
       workerId: pipeline.workerId,
@@ -225,6 +226,8 @@ class LivePreviewComponent extends Component<Props> {
     })
 
     const createParams = {
+            // Use the client id as a correlation id
+            id: this.connection.socket.io.engine.id,
             name: selectedPipeline,
             workerId: selectedWorker
     };
