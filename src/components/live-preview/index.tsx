@@ -247,8 +247,8 @@ class LivePreviewComponent extends Component<Props> {
       {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
       {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
       {name: 'centerY', label: 'Center Y', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
-      {name: 'minRadius', label: 'Min Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
-      {name: 'maxRadius', label: 'Max Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'}
+      {name: 'innerRadius', label: 'Min Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
+      {name: 'outerRadius', label: 'Max Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'}
     ];
 
     const initialValues = fields.reduce((total: {[name: string]: string | undefined}, {name, initial}) => {
