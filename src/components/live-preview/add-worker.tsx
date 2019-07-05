@@ -30,6 +30,9 @@ const AddWorker : React.FC<Props> = ({apiKey, open, onClose}) => {
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
+          Request an interactive session to the SLURM scheduler.
+        </DialogContentText>
+        <DialogContentText>
           Run the command below to spawn a new worker that can be used to execute pipelines.
         </DialogContentText>
         <pre style={{whiteSpace: 'pre-wrap'}}>
