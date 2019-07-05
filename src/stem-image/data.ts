@@ -4,6 +4,7 @@ import {
 } from './types';
 import { StreamConnection } from './connection';
 import { MultiSubjectProducer, IObserver } from './subject';
+import { decode } from '@msgpack/msgpack';
 
 export interface ImageDataSource {
   getImageSize: () => ImageSize;
@@ -12,6 +13,13 @@ export interface ImageDataSource {
   getPixelData: (i: number, j: number) => number;
   subscribe: (event: ImageSourceEvent, observer: IObserver) => any;
   unsubscribe: (event: ImageSourceEvent, observer: IObserver) => any;
+}
+
+export interface PipelineExecutionData {
+  rank: number,
+  workerId: string,
+  pipelineId: string,
+  result: number[][]
 }
 
 export class BaseImageDataSource extends MultiSubjectProducer {
@@ -58,7 +66,8 @@ export class BaseImageDataSource extends MultiSubjectProducer {
     let max = Number.NEGATIVE_INFINITY;
     for (let i = 0; i < this.data.length; ++i) {
       const value = this.data[i];
-      if (value < min) {
+      // For now exclude 0, so we can see the chunks come in.
+      if (value < min && value > 0) {
         min = value;
       }
       if (value > max) {
@@ -121,11 +130,17 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     this.setImageSize({width, height});
   }
 
-  private dataObserver(message: any) {
-    let {values, indexes} = message.data;
-      values = new Float64Array(values);
-      indexes = new Uint32Array(indexes);
-      this.updateImageChunk({indexes, values});
+  private dataObserver(message: ArrayBuffer) {
+    let data = decode(new Uint8Array(message)) as PipelineExecutionData;
+    let result = data.result;
+    const width = result[0].length;
+    const height = result.length;
+    this.setImageSize({width, height});
+
+    let values: number[] = [];
+    values = values.concat(...result);
+
+    this.updateImageChunk(new Float64Array(values));
   }
 
   private setImageSize(size: ImageSize) {
@@ -137,19 +152,12 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     }
   }
 
-  private updateImageChunk(chunk: ImageDataChunk) {
-    const {indexes, values} = chunk;
+  private updateImageChunk(values: Float64Array) {
     const {width, height} = this.size;
     const n = width * height;
 
-    if (indexes.length !== values.length) {
-      return;
-    }
-
-    for(let i = 0; i < indexes.length; ++i) {
-      if (indexes[i] < n) {
-        this.data[indexes[i]] = values[i];
-      }
+    for(let i = 0; i < values.length; ++i) {
+        this.data[i] += values[i];
     }
 
     this.updateRange();
