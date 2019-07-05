@@ -17,7 +17,7 @@ interface Props {
 const AddWorker : React.FC<Props> = ({apiKey, open, onClose}) => {
   const { protocol, hostname } = window.location;
 
-  const command = `mpiexec -n 1 stemworker -u ${protocol}//${hostname}:5000 -k ${apiKey}`;
+  const command = `mpiexec -n $SLURM_JOB_NUM_NODES stemworker -u ${protocol}//${hostname}:5000 -k ${apiKey}`;
 
   return (
     <InstructionDialog
