@@ -7,7 +7,7 @@ import { StreamImageDataSource } from '../../stem-image/data';
 import { StreamConnection } from '../../stem-image/connection';
 import STEMImage from '../stem-image';
 import FormComponent from './form';
-import { composeValidators, requiredValidator, integerValidator } from '../../utils/forms';
+import { composeValidators, requiredValidator, makeFormFields, ServerField, FormField } from '../../utils/forms';
 import StatusBar from './status';
 import Dialog from './dialog';
 import AddWorker from './add-worker';
@@ -48,6 +48,7 @@ interface Pipeline {
   name: string;
   description: string;
   displayName: string;
+  parameters: {[name: string]: ServerField};
 }
 
 interface Worker {
@@ -57,6 +58,17 @@ interface Worker {
 
 export interface Workers {
   [workerId: string]: Worker;
+}
+
+const pipelineParameters = (workers: Workers, workerId: string, pipelineName: string) : {[name:string]: ServerField} => {
+  if (!(workerId in workers)) {
+    return {};
+  }
+  const worker = workers[workerId];
+  if (!worker.pipelines || !worker.pipelines[pipelineName]) {
+    return {};
+  }
+  return worker.pipelines[pipelineName].parameters;
 }
 
 interface PipelineCreatedReply {
@@ -243,13 +255,12 @@ class LivePreviewComponent extends Component<Props> {
       connected, connecting, workers, fieldValues,
       selectedWorker, selectedPipeline, openPipelineForm, openAddWorker
     } = this.state;
-    const fields = [
-      {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)},
-      {name: 'centerX', label: 'Center X', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
-      {name: 'centerY', label: 'Center Y', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
-      {name: 'innerRadius', label: 'Min Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'},
-      {name: 'outerRadius', label: 'Max Radius', initial: undefined, validator: composeValidators(requiredValidator, integerValidator), width: 6, type: 'number'}
-    ];
+
+    const fields = ([
+      {name: 'path', label: 'File Path', initial: undefined, validator: composeValidators(requiredValidator)} as FormField
+    ]).concat(
+      makeFormFields(pipelineParameters(workers, selectedWorker, selectedPipeline))
+    );
 
     const initialValues = fields.reduce((total: {[name: string]: string | undefined}, {name, initial}) => {
       if (fieldValues[name] !== undefined) {

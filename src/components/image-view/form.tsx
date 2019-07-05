@@ -1,26 +1,14 @@
 import React from 'react';
-import { TextField, Button, FormControl, Grid } from '@material-ui/core';
+import { TextField, FormControl, Grid } from '@material-ui/core';
 import {  WithStyles, Theme, withStyles, createStyles } from '@material-ui/core/styles';
 
-import { Validator } from '../../utils/forms';
+import { FormField } from '../../utils/forms';
 
 const styles = (theme: Theme) => createStyles({
   field: {
     marginBottom: theme.spacing(3)
-  },
-  button: {
-    marginTop: theme.spacing(3)
   }
 });
-
-interface FormField {
-  name: string;
-  label: string;
-  initial?: string;
-  validator?: Validator;
-  width?: number;
-  type?: string;
-}
 
 interface Props extends WithStyles<typeof styles> {
   fields: FormField[];
