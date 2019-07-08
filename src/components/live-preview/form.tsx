@@ -3,7 +3,7 @@ import { Form, Field } from 'react-final-form';
 import { TextField, Button, FormControl, Grid } from '@material-ui/core';
 import {  WithStyles, Theme, withStyles, createStyles } from '@material-ui/core/styles';
 
-import { Validator } from '../../utils/forms';
+import { FormField } from '../../utils/forms';
 
 const styles = (theme: Theme) => createStyles({
   field: {
@@ -13,15 +13,6 @@ const styles = (theme: Theme) => createStyles({
     marginTop: theme.spacing(3)
   }
 });
-
-interface FormField {
-  name: string;
-  label: string;
-  initial?: string;
-  validator?: Validator;
-  width?: number;
-  type?: string;
-}
 
 interface Props extends WithStyles<typeof styles> {
   fields: FormField[];

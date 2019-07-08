@@ -20,7 +20,7 @@ export const requiredBaseValidator : BaseValidator = (value) => {
     return false;
   }
 
-  if (value.trim().length === 0) {
+  if (typeof value === 'string' && value.trim().length === 0) {
     return false;
   }
 
@@ -43,3 +43,60 @@ export const integerBaseValidator : BaseValidator = (value) => {
 }
 
 export const integerValidator = makeValidator(integerBaseValidator, 'Must be an integer');
+
+export interface FormField {
+  name: string;
+  label: string;
+  initial?: string;
+  validator?: Validator;
+  width?: number;
+  type?: string;
+}
+
+type ServerFieldType = 'string' | 'number' | 'integer';
+
+export interface ServerField {
+  type: ServerFieldType;
+  label?: string;
+  description?: string;
+  default?: any;
+}
+
+export const makeFormFields = (serverFields: {[name:string]: ServerField}) : FormField[] => {
+  return Object.entries(serverFields).reduce((fields, [name, field]) => {
+    const label = field.label || name;
+    const initial = field.default;
+    const width = 6;
+    let type: string | undefined;
+    const validators = [ requiredValidator ];
+    switch(field.type) {
+      case 'string': {
+        type = field.type;
+        break;
+      }
+      case 'number': {
+        type = field.type;
+        validators.push(numberValidator);
+        break;
+      }
+      case 'integer': {
+        type = 'number';
+        validators.push(integerValidator);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+    const validator = composeValidators(...validators);
+    fields.push({
+      name,
+      type,
+      label,
+      initial,
+      validator,
+      width
+    });
+    return fields;
+  }, [] as FormField[]);
+}
