@@ -74,6 +74,11 @@ export class BaseImageDataSource extends MultiSubjectProducer {
         max = value;
       }
     }
+    // Ensure finite range
+    if (max - min < Number.EPSILON) {
+      min = 0;
+      max = 1;
+    }
     this.range = {min, max};
   }
 }
