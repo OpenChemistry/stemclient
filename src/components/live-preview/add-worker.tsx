@@ -17,7 +17,7 @@ interface Props {
 const AddWorker : React.FC<Props> = ({apiKey, open, onClose}) => {
   const { protocol, hostname } = window.location;
 
-  const command = `srun -n $SLURM_JOB_NUM_NODES shifter --image=openchemistry/stemworker --entrypoint -- -u ${protocol}//${hostname} -k ${apiKey}`;
+  const command = `srun -N $SLURM_JOB_NUM_NODES shifter --image=openchemistry/stemworker --entrypoint -- -u ${protocol}//${hostname} -k ${apiKey}`;
 
   return (
     <InstructionDialog
