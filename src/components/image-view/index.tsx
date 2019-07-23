@@ -113,7 +113,7 @@ const ImageView: React.FC<Props> = ({
     <PipelineWrapper
       loggedIn={loggedIn}
       apiKey={apiKey}
-      extraValues={{fileId: image.fileId}}
+      extraValues={{imageId: image._id}}
       render={({source, values, setValues, pipeline}) => {
         const {selectionClass, parametersToPositions, positionsToParameters} = getPipelineSelection(pipeline);
         return (
