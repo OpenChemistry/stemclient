@@ -9,6 +9,16 @@ export function fetchImages() : Promise<IImage[]> {
     .then(res => res.json());
 }
 
+export function fetchImage(imageId: string) : Promise<IImage> {
+  return girderClient().get(`${PREFIX}/${imageId}`)
+    .then(res => res.json());
+}
+
+export function fetchImageFieldNames(imageId: string) : Promise<string[]> {
+  return girderClient().get(`${PREFIX}/${imageId}/names`)
+    .then(res => res.json());
+}
+
 export function fetchImageFieldSize(imageId: string, fieldName: string) : Promise<ImageSize> {
   return girderClient().get(`${PREFIX}/${imageId}/${fieldName}/shape`)
     .then(res => res.json())
@@ -18,6 +28,11 @@ export function fetchImageFieldSize(imageId: string, fieldName: string) : Promis
 export function fetchImageField(imageId: string, fieldName: string) : Promise<ReadableStream> {
   return girderClient().get(`${PREFIX}/${imageId}/${fieldName}`, {format: 'msgpack'})
     .then(res => res.body!);
+}
+
+export function fetchImageFrameTypes(imageId: string) : Promise<FrameType[]> {
+  return girderClient().get(`${PREFIX}/${imageId}/frames/types`)
+    .then(res => res.json());
 }
 
 export function fetchImageFrameSize(imageId: string, type: FrameType) : Promise<ImageSize> {

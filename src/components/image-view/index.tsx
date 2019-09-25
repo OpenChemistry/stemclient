@@ -94,8 +94,7 @@ interface Props extends WithStyles<typeof styles> {
   loggedIn: boolean;
   apiKey: string;
   image: IImage;
-  brightFieldSource: ImageDataSource;
-  darkFieldSource: ImageDataSource;
+  imageSources: {[name: string]: ImageDataSource | undefined};
   frameSource: ImageDataSource;
   progress: number;
   colors: RGBColor[];
@@ -105,7 +104,7 @@ interface Props extends WithStyles<typeof styles> {
 
 const ImageView: React.FC<Props> = ({
   image, colors, onSelectionChange, classes, progress,
-  brightFieldSource, darkFieldSource, frameSource, selection,
+  imageSources, frameSource, selection,
   loggedIn, apiKey
 }) => {
 
@@ -129,16 +128,13 @@ const ImageView: React.FC<Props> = ({
                 <Typography variant="h5" className={classes.title}>
                   Images
                 </Typography>
-                <div className={classes.image}>
-                  <STEMImage source={brightFieldSource} colors={colors}>
-                    <SelectionOverlay source={brightFieldSource} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
-                  </STEMImage>
-                </div>
-                <div className={classes.image}>
-                  <STEMImage source={darkFieldSource} colors={colors}>
-                    <SelectionOverlay source={darkFieldSource} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
-                  </STEMImage>
-                </div>
+                {Object.entries(imageSources).filter(([_name, source]) => !!source).map(([name, source]) => (
+                  <div className={classes.image} key={name}>
+                    <STEMImage source={source!} colors={colors}>
+                      <SelectionOverlay source={source!} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
+                    </STEMImage>
+                  </div>
+                ))}
               </Grid>
               <Grid item xs={6}>
                 <div className={`${classes.frameContainer} ${classes.title}`}>

@@ -2,19 +2,22 @@ import { call, put, takeEvery, takeLatest, all } from 'redux-saga/effects';
 import { ActionType } from 'deox';
 import { decodeStream } from '@msgpack/msgpack';
 
-import { IImage, ImageData, FrameType, GirderFile } from '../../types';
+import { IImage, ImageData, FrameType, GirderFile, FieldStatus } from '../../types';
 import { ImageSize } from '../../stem-image/types';
 
 import {
   fetchImages, fetchImagesSucceeded, fetchImagesFailed,
+  fetchImage, fetchImageSucceeded, fetchImageFailed,
   fetchImageField, fetchImageFieldSucceeded, fetchImageFieldFailed,
   fetchImageFrames, fetchImageFrameSucceeded, fetchImageFrameFailed
 } from '../ducks/images';
 import {
   fetchImages as fetchImagesRest,
+  fetchImage as fetchImageRest,
   fetchImageField as fetchImageFieldRest,
   fetchImageFrame as fetchImageFrameRest,
-  fetchImageFieldSize, fetchImageFrameSize
+  fetchImageFieldSize, fetchImageFrameSize,
+  fetchImageFieldNames, fetchImageFrameTypes
 } from '../../rest/images';
 import { fetchFile } from '../../rest/files';
 
@@ -75,6 +78,40 @@ export function* watchFetchImages() {
   yield takeEvery(fetchImages.toString(), onFetchImages);
 }
 
+function* onFetchImage(action: ActionType<typeof fetchImage>) {
+  const { imageId } = action.payload;
+  try {
+    let image : IImage = yield call(fetchImageRest, imageId);
+    const file : GirderFile = yield call(fetchFile, image.fileId);
+    // Add metadata from the file associated to the image
+    const {created, name, size} = file;
+    image = {...image, created, name, size};
+    // Add previously calculated stem image names
+    const fieldNames : string[] = yield call(fetchImageFieldNames, imageId);
+    // Add the frame types available in this dataset
+    const framesTypes : FrameType[] = yield call(fetchImageFrameTypes, imageId);
+    image['framesTypes'] = framesTypes;
+    // Add the size of the frames
+    if (framesTypes.length > 0) {
+      const framesSize : ImageSize = yield call(fetchImageFrameSize, imageId, framesTypes[0]);
+      image['framesSize'] = framesSize;
+    }
+
+    const fields : {[name: string]: ImageData | FieldStatus} = {};
+    fieldNames.forEach((name) => {
+      fields[name] = 'empty';
+    });
+    image['fields'] = fields;
+    yield put(fetchImageSucceeded(imageId, image));
+  } catch(e) {
+    yield put(fetchImageFailed(e));
+  }
+}
+
+export function* watchFetchImage() {
+  yield takeEvery(fetchImage.toString(), onFetchImage);
+}
+
 function* onFetchImageField(action: ActionType<typeof fetchImageField>) {
   const { imageId, fieldName } = action.payload;
   try {
@@ -116,7 +153,11 @@ function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
 
       if (cumulate) {
         imageFrame.data.forEach((value: number, i: number) => {
-          data[i] += value;
+          if (type == 'electron') {
+            data[i] = value || data[i];
+          } else {
+            data[i] += value;
+          }
         });
         imageData = {size: imageSize, data};
         positionName = 'cumulated';
