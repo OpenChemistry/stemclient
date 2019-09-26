@@ -39,7 +39,7 @@ async function extractImageData(stream: ReadableStream, size: ImageSize, type: F
   let data: number[];
 
   switch(type) {
-    case 'electron': {
+    case FrameType.Electron: {
       data = [];
       const {width, height} = size;
       for (let i = 0; i < width * height; ++i) {
@@ -48,7 +48,7 @@ async function extractImageData(stream: ReadableStream, size: ImageSize, type: F
       decodedData.forEach(index => {data[index] = 1});
       break;
     }
-    case 'raw':
+    case FrameType.Raw:
     default: {
       data = decodedData;
     }
@@ -99,7 +99,7 @@ function* onFetchImage(action: ActionType<typeof fetchImage>) {
 
     const fields : {[name: string]: ImageData | FieldStatus} = {};
     fieldNames.forEach((name) => {
-      fields[name] = 'empty';
+      fields[name] = FieldStatus.Empty;
     });
     image['fields'] = fields;
     yield put(fetchImageSucceeded(imageId, image));
@@ -117,7 +117,7 @@ function* onFetchImageField(action: ActionType<typeof fetchImageField>) {
   try {
     const imageSize = yield call(fetchImageFieldSize, imageId, fieldName);
     const imageStream = yield call(fetchImageFieldRest, imageId, fieldName);
-    const imageField = yield call(extractImageData, imageStream, imageSize, 'raw');
+    const imageField = yield call(extractImageData, imageStream, imageSize, FrameType.Raw);
     yield put(fetchImageFieldSucceeded(imageId, fieldName, imageField));
   } catch(e) {
     yield put(fetchImageFieldFailed(e));
@@ -152,12 +152,20 @@ function* onFetchImageFrames(action: ActionType<typeof fetchImageFrames>) {
       const imageFrame = yield call(extractImageData, imageStream, imageSize, type);
 
       if (cumulate) {
-        imageFrame.data.forEach((value: number, i: number) => {
-          if (type == 'electron') {
-            data[i] = value || data[i];
-          } else {
-            data[i] += value;
+        let cumulator : (cumulated: number, current: number) => number;
+        switch (type) {
+          case FrameType.Electron: {
+            cumulator = (cumulated, current) => cumulated || current;
+            break;
           }
+          default: {
+            cumulator = (cumulated, current) => cumulated + current;
+            break;
+          }
+        }
+
+        imageFrame.data.forEach((value: number, i: number) => {
+          data[i] = cumulator(data[i], value);
         });
         imageData = {size: imageSize, data};
         positionName = 'cumulated';

@@ -1,7 +1,15 @@
 import { ImageSize } from '../stem-image/types';
 
-export type FrameType = 'raw' | 'electron';
-export type FieldStatus = 'empty' | 'fetching';
+export enum FrameType {
+  Raw = 'raw',
+  Electron = 'electron'
+};
+
+export enum FieldStatus {
+  Empty = 'empty',
+  Fetching = 'fetching'
+};
+
 export interface ImageData {
   size: ImageSize;
   data: number[];

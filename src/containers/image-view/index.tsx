@@ -41,13 +41,15 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, loggedIn, apiKey,
 
   useEffect(() => {
     const newSources = {...sources};
-    Object.entries(fields).forEach(([name, data]) => {
+    Object.entries(fields).forEach((entry) => {
+      const name = entry[0];
+      const data = entry[1];
       switch (data) {
-        case 'empty': {
+        case FieldStatus.Empty: {
           dispatch(fetchImageField(imageId, name));
           break;
         }
-        case 'fetching': {
+        case FieldStatus.Fetching: {
           break;
         }
         default: {
@@ -88,9 +90,15 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, loggedIn, apiKey,
     let size : ImageSize | undefined;
     for (let name in fields) {
       const field = fields[name];
-      if (field !== 'empty' && field !== 'fetching') {
-        size = field.size;
-        break;
+      switch (field) {
+        case FieldStatus.Empty:
+        case FieldStatus.Fetching: {
+          break;
+        }
+        default: {
+          size = field.size;
+          break;
+        }
       }
     }
     if (!size) {
