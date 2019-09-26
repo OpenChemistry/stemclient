@@ -163,12 +163,16 @@ export class BaseSelection extends MultiSubjectProducer {
     this.drawCanvas.style.width = '100%';
     this.drawCanvas.style.height = '100%';
     this.drawCanvas.style.position = 'absolute';
+    this.drawCanvas.style.left = '0';
+    this.drawCanvas.style.top = '0';
     this.drawContext = this.drawCanvas.getContext('2d')!;
     this.interactionCanvas = document.createElement('canvas');
     this.interactionCanvas.style.width = '100%';
     this.interactionCanvas.style.height = '100%';
     this.interactionCanvas.style.position = 'absolute';
     this.interactionCanvas.style.display = 'none';
+    this.interactionCanvas.style.left = '0';
+    this.interactionCanvas.style.top = '0';
     this.interactionContext = this.interactionCanvas.getContext('2d')!;
     this.container.appendChild(this.drawCanvas);
     this.container.appendChild(this.interactionCanvas);

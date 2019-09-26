@@ -1,13 +1,17 @@
 import { createAction, createReducer } from 'deox';
 import produce from 'immer';
 
-import { IImage, FieldName, FrameType, ImageData } from '../../types';
+import { IImage, FrameType, ImageData } from '../../types';
 
 // Actions
 
 const FETCH_IMAGES_REQUESTED = 'FETCH_IMAGES_REQUESTED';
 const FETCH_IMAGES_SUCCEEDED = 'FETCH_IMAGES_SUCCEEDED';
 const FETCH_IMAGES_FAILED = 'FETCH_IMAGES_FAILED';
+
+const FETCH_IMAGE_REQUESTED = 'FETCH_IMAGE_REQUESTED';
+const FETCH_IMAGE_SUCCEEDED = 'FETCH_IMAGE_SUCCEEDED';
+const FETCH_IMAGE_FAILED = 'FETCH_IMAGE_FAILED';
 
 const FETCH_IMAGE_FIELD_REQUESTED = 'FETCH_IMAGE_FIELD_REQUESTED';
 const FETCH_IMAGE_FIELD_SUCCEEDED = 'FETCH_IMAGE_FIELD_SUCCEEDED';
@@ -21,8 +25,12 @@ export const fetchImages = createAction(FETCH_IMAGES_REQUESTED);
 export const fetchImagesSucceeded = createAction(FETCH_IMAGES_SUCCEEDED, resolve => (images: IImage[]) => resolve(images));
 export const fetchImagesFailed = createAction(FETCH_IMAGES_FAILED, resolve => (error: any) => resolve(error));
 
-export const fetchImageField = createAction(FETCH_IMAGE_FIELD_REQUESTED, resolve => (imageId: string, fieldName: FieldName) => resolve({imageId, fieldName}));
-export const fetchImageFieldSucceeded = createAction(FETCH_IMAGE_FIELD_SUCCEEDED, resolve => (imageId: string, fieldName: FieldName, data: ImageData) => resolve({imageId, fieldName, data}));
+export const fetchImage = createAction(FETCH_IMAGE_REQUESTED, resolve => (imageId: string) => resolve({imageId}));
+export const fetchImageSucceeded = createAction(FETCH_IMAGE_SUCCEEDED, resolve => (imageId: string, image: IImage) => resolve({imageId, image}));
+export const fetchImageFailed = createAction(FETCH_IMAGE_FAILED, resolve => (error: any) => resolve(error));
+
+export const fetchImageField = createAction(FETCH_IMAGE_FIELD_REQUESTED, resolve => (imageId: string, fieldName: string) => resolve({imageId, fieldName}));
+export const fetchImageFieldSucceeded = createAction(FETCH_IMAGE_FIELD_SUCCEEDED, resolve => (imageId: string, fieldName: string, data: ImageData) => resolve({imageId, fieldName, data}));
 export const fetchImageFieldFailed = createAction(FETCH_IMAGE_FIELD_FAILED, resolve => (error: any) => resolve(error));
 
 export const fetchImageFrames = createAction(FETCH_IMAGE_FRAMES_REQUESTED, resolve => (imageId: string, positions: number[], type: FrameType, cumulate: boolean, callback?: (i: number) => void) => resolve({imageId, positions, type, cumulate, callback}));
@@ -51,6 +59,12 @@ const reducer = createReducer(defaultState, handle => [
       return total;
     }, byId);
     return {...state, byId};
+  }),
+  handle(fetchImageSucceeded, (state, action) => {
+    return produce(state, draft => {
+      const { imageId, image } = action.payload;
+      draft.byId[imageId] = image;
+    });
   }),
   handle(fetchImageFieldSucceeded, (state, action) => {
     return produce(state, draft => {

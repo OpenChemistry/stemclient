@@ -1,70 +1,76 @@
 import React, { useEffect, useState } from 'react';
 import { connect, DispatchProp } from 'react-redux';
 import { VIRIDIS } from '@colormap/presets';
+import { auth } from '@openchemistry/girder-redux';
 
-import { IImage, ImageData } from '../../types';
+import { IImage, ImageData, FieldStatus } from '../../types';
 import { IStore } from '../../store';
 
-import { fetchImages, fetchImageField, fetchImageFrames, getImageById } from '../../store/ducks/images';
-import { StaticImageDataSource } from '../../stem-image/data';
+import { isLoggedIn } from '../../store/ducks/flask';
+import { fetchImage, fetchImageField, fetchImageFrames, getImageById } from '../../store/ducks/images';
+import { StaticImageDataSource, ImageDataSource } from '../../stem-image/data';
 import { ImageSize, Vec2 } from '../../stem-image/types';
 import ImageView from '../../components/image-view';
 
 interface OwnProps {};
 interface StateProps {
   imageId: string;
+  loggedIn: boolean;
+  apiKey: string;
   image?: IImage;
+  fields: {[name: string]: ImageData | FieldStatus};
 };
 type Props = OwnProps & StateProps & DispatchProp;
 
-const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
+const ImageViewContainer : React.FC<Props> = ({imageId, image, loggedIn, apiKey, dispatch, fields}) => {
 
-  const [brightFieldSource] = useState(new StaticImageDataSource());
-  const [darkFieldSource] = useState(new StaticImageDataSource());
+  const [sources, setSources] = useState({} as {[name: string]: ImageDataSource | undefined});
   const [frameSource] = useState(new StaticImageDataSource());
   const [selection, setSelection] = useState([[0, 0], [0, 0]] as Vec2[]);
-  const [mask, setMask] = useState([[0, 0], [0, 0], [0, 0]] as Vec2[]);
   const [progress, setProgress] = useState(100);
 
-  let darkField : ImageData | undefined;
-  let brightField : ImageData | undefined;
   let rawFrame : ImageData | undefined;
-
-  if (image && image.fields) {
-    brightField = image.fields['bright'];
-    darkField = image.fields['dark'];
-  }
 
   if (image && image.frames) {
     rawFrame = image.frames['cumulated'];
   }
 
   useEffect(() => {
+    dispatch(auth.actions.loadApiKey({name: 'stempy'}));
+  }, []);
+
+  useEffect(() => {
+    const newSources = {...sources};
+    Object.entries(fields).forEach((entry) => {
+      const name = entry[0];
+      const data = entry[1];
+      switch (data) {
+        case FieldStatus.Empty: {
+          dispatch(fetchImageField(imageId, name));
+          break;
+        }
+        case FieldStatus.Fetching: {
+          break;
+        }
+        default: {
+          if (!newSources[name]) {
+            const source = new StaticImageDataSource();
+            source.setImageSize(data.size);
+            source.setImageData(new Float64Array(data.data));
+            newSources[name] = source;
+          }
+          break;
+        }
+      }
+    });
+    setSources(newSources);
+  }, [imageId, fields, dispatch]);
+
+  useEffect(() => {
     if (imageId) {
-      dispatch(fetchImageField(imageId, 'bright'));
-      dispatch(fetchImageField(imageId, 'dark'));
+      dispatch(fetchImage(imageId));
     }
   }, [imageId, dispatch]);
-
-  useEffect(() => {
-    if (imageId && !image) {
-      dispatch(fetchImages());
-    }
-  }, [imageId, image, dispatch]);
-
-  useEffect(() => {
-    if (brightField) {
-      brightFieldSource.setImageSize(brightField.size);
-      brightFieldSource.setImageData(new Float64Array(brightField.data));
-    }
-  }, [brightField, brightFieldSource]);
-
-  useEffect(() => {
-    if (darkField) {
-      darkFieldSource.setImageSize(darkField.size);
-      darkFieldSource.setImageData(new Float64Array(darkField.data));
-    }
-  }, [darkField, darkFieldSource]);
 
   useEffect(() => {
     if (rawFrame) {
@@ -81,12 +87,21 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
 
     setSelection(orderedSelection);
 
-    let size : ImageSize;
-    if (brightField) {
-      size = brightField.size;
-    } else if (darkField) {
-      size = darkField.size;
-    } else {
+    let size : ImageSize | undefined;
+    for (let name in fields) {
+      const field = fields[name];
+      switch (field) {
+        case FieldStatus.Empty:
+        case FieldStatus.Fetching: {
+          break;
+        }
+        default: {
+          size = field.size;
+          break;
+        }
+      }
+    }
+    if (!size) {
       return;
     }
 
@@ -103,26 +118,23 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
       setProgress(newProgress);
     };
 
-    dispatch(fetchImageFrames(imageId, positions, 'raw', true, callback));
+    if (image && image.framesTypes && image.framesTypes.length > 0) {
+      dispatch(fetchImageFrames(imageId, positions, image.framesTypes[0], true, callback));
+    }
   }
-
-  const onMaskChange = (handlePositions: Vec2[]) => {
-    setMask(handlePositions);
-  };
 
   if (image && image.fields) {
     return (
       <ImageView
+        loggedIn={loggedIn}
+        apiKey={apiKey}
         image={image}
-        brightFieldSource={brightFieldSource}
-        darkFieldSource={darkFieldSource}
+        imageSources={sources}
         frameSource={frameSource}
         progress={progress}
         colors={VIRIDIS}
         onSelectionChange={onSelectionChange}
-        onMaskChange={onMaskChange}
         selection={selection}
-        mask={mask}
       />
     );
   } else {
@@ -133,7 +145,10 @@ const ImageViewContainer : React.FC<Props> = ({imageId, image, dispatch}) => {
 function mapStateToProps(state: IStore, ownProps: OwnProps): StateProps {
   const {imageId} = (ownProps as any).match.params;
   const image = getImageById(state.images, imageId);
-  return { imageId, image };
+  const loggedIn = isLoggedIn(state.flask);
+  const apiKey = auth.selectors.getApiKey(state);
+  const fields = image ? image.fields ? image.fields : {} : {};
+  return { imageId, image, loggedIn, apiKey, fields };
 }
 
 export default connect(mapStateToProps)(ImageViewContainer);
