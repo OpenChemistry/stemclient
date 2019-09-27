@@ -146,6 +146,7 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     values = values.concat(...result);
 
     this.updateImageChunk(new Float64Array(values));
+    this.emit(this.dataEvent, data);
   }
 
   private setImageSize(size: ImageSize) {

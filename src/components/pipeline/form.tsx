@@ -15,7 +15,7 @@ const styles = (theme: Theme) => createStyles({
 
 interface Props extends WithStyles<typeof styles> {
   fields: FormField[];
-  values: {[fieldName: string]: string};
+  values: {[fieldName: string]: string | undefined};
   onChange: (name: string, value: any) => void;
   onSubmit: (values: {[fieldName: string]: any}) => void;
   disabled?: boolean;
@@ -39,7 +39,7 @@ const FormComponent : React.FC<Props> = ({fields, values, classes, onChange, onS
     <Fragment>
       <Grid container spacing={3}>
       {fields.map(({name, label, validator, width, type}) => {
-        const value = values[name] === undefined ? '' : values[name].toString();
+        const value = values[name] === undefined ? '' : values[name]!.toString();
         const error = validator ? validator(value) : undefined;
         return (
           <Grid item key={name}  xs={width ? width as any : 12}>
