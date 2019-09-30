@@ -220,9 +220,6 @@ class LivePreviewComponent extends Component<Props> {
     const deleteParams = {
       pipelineId: this.state.pipelineId,
     }
-    if (result.rank == 0) {
-      this.connection.socket.emit('stem.pipeline.delete', deleteParams);
-    }
   }
 
 
