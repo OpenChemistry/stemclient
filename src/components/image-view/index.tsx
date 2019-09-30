@@ -196,7 +196,7 @@ const ImageView: React.FC<Props> = ({
                         title={title}
                         footer={footer}
                         key={pipelineId}
-                        collapsed={collapsed[pipelineId] !== undefined ? collapsed[pipelineId] : true}
+                        collapsed={collapsed[pipelineId] !== undefined ? collapsed[pipelineId] : false}
                         onToggle={(collapse)=>{setCollapsed({...collapsed, [pipelineId]: collapse})}}
                         actions={actions}
                         thumbnail={thumbnail}
@@ -234,7 +234,7 @@ const ImageView: React.FC<Props> = ({
                     <CollapsibleImage
                       title={name}
                       key={name}
-                      collapsed={collapsed[name] !== undefined ? collapsed[name] : true}
+                      collapsed={collapsed[name] !== undefined ? collapsed[name] : false}
                       onToggle={(collapse)=>{setCollapsed({...collapsed, [name]: collapse})}}
                       actions={actions}
                       thumbnail={thumbnail}
