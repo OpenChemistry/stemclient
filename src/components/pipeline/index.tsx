@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Button } from '@material-ui/core';
 import { createStyles, withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 
-import { StreamImageDataSource, ImageDataSource } from '../../stem-image/data';
+import { StreamImageDataSource, ImageDataSource, PipelineExecutionData } from '../../stem-image/data';
 import { StreamConnection } from '../../stem-image/connection';
 import FormComponent from './form';
 import { makeFormFields, ServerField, FormField } from '../../utils/forms';
@@ -25,11 +25,15 @@ const styles = (theme: Theme) => createStyles({
   }
 });
 
+export type PipelineCreatedCallback = (pipelineId: string, workerId: string, name: string, parameters: {[name: string]: any}) => void;
+export type PipelineExecutedCallback = (pipelineId: string, workerId: string, rank: number, previewSource: ImageDataSource) => void;
+
 interface RenderProps {
-  source: ImageDataSource;
-  values: {[fieldName: string]: string};
+  previewSource: ImageDataSource;
+  values: {[fieldName: string]: string | undefined};
   setValues: (values: {[fieldName: string]: string}) => void;
   pipeline: string;
+  executing: boolean;
 }
 
 interface Props extends WithStyles<typeof styles> {
@@ -38,11 +42,14 @@ interface Props extends WithStyles<typeof styles> {
   render: React.FC<RenderProps>;
   extraFields?: {[name: string]: FormField},
   extraValues?: {[name: string]: any}
+  onCreated?: PipelineCreatedCallback;
+  onExecuted?: PipelineExecutedCallback;
 }
 
 interface State {
   connected: boolean;
   connecting: boolean;
+  executing: boolean;
   fieldValues: {[fieldName: string]: string};
   workers: Workers;
   openPipelineForm: boolean;
@@ -81,6 +88,7 @@ const pipelineParameters = (workers: Workers, workerId: string, pipelineName: st
 
 interface PipelineCreatedReply {
   id: string,
+  name: string,
   pipelineId: string;
   workerId: string
 }
@@ -89,6 +97,7 @@ class PipelineWrapper extends Component<Props> {
   state: State = {
     connected: false,
     connecting: false,
+    executing: false,
     fieldValues: {},
     workers: {},
     openPipelineForm: false,
@@ -117,7 +126,7 @@ class PipelineWrapper extends Component<Props> {
     this.onAddWorker = this.onAddWorker.bind(this);
     this.onFieldChange = this.onFieldChange.bind(this);
     this.setValues = this.setValues.bind(this);
-    this.connection.subscribe('stem.pipeline.executed', this.onPipelineExecuted);
+    this.source.subscribe('stem.pipeline.executed', this.onPipelineExecuted);
   }
 
   componentDidMount() {
@@ -133,6 +142,8 @@ class PipelineWrapper extends Component<Props> {
 
   componentWillUnmount() {
     this.connection.unsubscribe('stem.worker', this.onReceiveWorkers);
+    this.connection.unsubscribe('stem.pipeline.created', this.onPipelineCreated);
+    this.source.unsubscribe('stem.pipeline.executed', this.onPipelineExecuted);
   }
 
   onFieldChange(name: string, value: any) {
@@ -224,25 +235,44 @@ class PipelineWrapper extends Component<Props> {
 
   onPipelineCreated(pipeline: PipelineCreatedReply) {
     const { extraValues } = this.props;
+    const { pipelineId, workerId, name } = pipeline;
     const executeParams = {
-      pipelineId: pipeline.pipelineId,
-      workerId: pipeline.workerId,
+      pipelineId,
+      workerId,
       params: {...(extraValues || {}), ...this.state.fieldValues}
     }
     this.setState((state: State) => {
-      state.pipelineId = pipeline.pipelineId;
+      state.pipelineId = pipelineId;
+        state.executing = true;
       return state;
     });
 
     this.connection.socket.emit('stem.pipeline.execute', executeParams);
+
+    const { onCreated } = this.props;
+    if (onCreated) {
+      onCreated(pipelineId, workerId, name, {...this.state.fieldValues});
+    }
   }
 
-  onPipelineExecuted(result: any) {
+  onPipelineExecuted(executedData: PipelineExecutionData) {
+    const { pipelineId, rank, workerId } = executedData;
+
     const deleteParams = {
-      pipelineId: this.state.pipelineId,
+      pipelineId,
     }
-    if (result.rank == 0) {
+
+    if (rank == 0) {
+      this.setState((state: State) => {
+        state.executing = false;
+        return state;
+      });
       this.connection.socket.emit('stem.pipeline.delete', deleteParams);
+    }
+
+    const { onExecuted } = this.props;
+    if (onExecuted) {
+      onExecuted(pipelineId, workerId, rank, this.source);
     }
   }
 
@@ -273,7 +303,7 @@ class PipelineWrapper extends Component<Props> {
   render() {
     const { classes, apiKey, render, extraFields } = this.props;
     const {
-      connected, connecting, workers, fieldValues,
+      connected, connecting, executing, workers, fieldValues,
       selectedWorker, selectedPipeline, openPipelineForm, openAddWorker
     } = this.state;
 
@@ -306,14 +336,15 @@ class PipelineWrapper extends Component<Props> {
         </div>
         <Button
           className={classes.row}
-          variant='contained' color='secondary' disabled={Object.keys(workers).length < 1}
+          variant='contained' color='secondary' disabled={Object.keys(workers).length < 1 || executing}
           onClick={() => {this.setState({openPipelineForm: true})}}
         >
           Generate Image
         </Button>
         {render({
-          source: this.source,
+          previewSource: this.source,
           values,
+          executing,
           setValues: this.setValues,
           pipeline: selectedPipeline
 
