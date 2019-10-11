@@ -8,7 +8,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import InfoIcon from '@material-ui/icons/Info';
 
 import { composeValidators, requiredValidator, FormField } from '../../utils/forms';
-import PipelineWrapper, {PipelineExecutedCallback, PipelineCreatedCallback} from '../pipeline';
+import PipelineWrapper, {PipelineExecutedCallback, PipelineCreatedCallback, ButtonOptions} from '../pipeline';
 import STEMImage from '../stem-image';
 import { ImageDataSource, StaticImageDataSource } from '../../stem-image/data';
 import CollapsibleImage from '../collapsible-image';
@@ -62,6 +62,8 @@ const LivePreview : React.FC<Props> = ({loggedIn, apiKey, classes}) => {
       }}
       onCreated={onPipelineCreated}
       onExecuted={onPipelineExecuted}
+      generateOptions={[ButtonOptions.SelectParameters]}
+      defaultGenerateOption={ButtonOptions.SelectParameters}
       render={() => (
         <Fragment>
           {Object.keys(tempMeta).length > 0 &&

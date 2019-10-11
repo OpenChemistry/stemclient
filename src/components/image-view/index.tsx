@@ -12,7 +12,7 @@ import STEMImage from '../stem-image';
 import SelectionOverlay from '../selection-overlay';
 import { IImage } from '../../types';
 import { SquareSelection, CircleSelection, calculateDistance, BaseSelection } from '../../stem-image/selection';
-import PipelineWrapper, {PipelineCreatedCallback, PipelineExecutedCallback} from '../pipeline';
+import PipelineWrapper, {PipelineCreatedCallback, PipelineExecutedCallback, ButtonOptions} from '../pipeline';
 import CollapsibleImage from '../collapsible-image';
 
 interface MaskParameters {
@@ -146,6 +146,8 @@ const ImageView: React.FC<Props> = ({
       extraValues={{imageId: image._id}}
       onCreated={onPipelineCreated}
       onExecuted={onPipelineExecuted}
+      generateOptions={[ButtonOptions.GenerateImage, ButtonOptions.SelectParameters]}
+      defaultGenerateOption={ButtonOptions.GenerateImage}
       render={({values, setValues, pipeline}) => {
         const {selectionClass, parametersToPositions, positionsToParameters} = getPipelineSelection(pipeline);
         return (

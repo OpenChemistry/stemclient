@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Button } from '@material-ui/core';
 import { createStyles, withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 
 import { StreamImageDataSource, ImageDataSource, PipelineExecutionData } from '../../stem-image/data';
@@ -9,6 +8,17 @@ import { makeFormFields, ServerField, FormField } from '../../utils/forms';
 import StatusBar from './status';
 import Dialog from './dialog';
 import AddWorker from './add-worker';
+import SplitButton from '../split-button';
+
+export enum ButtonOptions {
+  GenerateImage = "generate-image",
+  SelectParameters = 'select-parameters'
+}
+
+const ButtonOptionsLabels = {
+  [ButtonOptions.GenerateImage]: 'Generate Image',
+  [ButtonOptions.SelectParameters]: 'Select Parameters'
+};
 
 const styles = (theme: Theme) => createStyles({
   root: {
@@ -44,6 +54,8 @@ interface Props extends WithStyles<typeof styles> {
   extraValues?: {[name: string]: any}
   onCreated?: PipelineCreatedCallback;
   onExecuted?: PipelineExecutedCallback;
+  defaultGenerateOption: ButtonOptions;
+  generateOptions: ButtonOptions[];
 }
 
 interface State {
@@ -57,6 +69,7 @@ interface State {
   pipelineId: string;
   selectedWorker: string;
   selectedPipeline: string;
+  currentGenerateOption: ButtonOptions;
 }
 
 interface Pipeline {
@@ -93,24 +106,33 @@ interface PipelineCreatedReply {
   workerId: string
 }
 
-class PipelineWrapper extends Component<Props> {
-  state: State = {
-    connected: false,
-    connecting: false,
-    executing: false,
-    fieldValues: {},
-    workers: {},
-    openPipelineForm: false,
-    openAddWorker: false,
-    pipelineId: '',
-    selectedWorker: 'none',
-    selectedPipeline: 'none'
-  }
+class PipelineWrapper extends Component<Props, State> {
+  static defaultProps = {
+    defaultGenerateOption: ButtonOptions.SelectParameters,
+    generateOptions: [ButtonOptions.SelectParameters, ButtonOptions.GenerateImage]
+  };
+
   connection: StreamConnection;
   source: StreamImageDataSource;
+  anchorRef: HTMLDivElement | null = null;
 
   constructor(props: Props) {
     super(props);
+
+    this.state = {
+      connected: false,
+      connecting: false,
+      executing: false,
+      fieldValues: {},
+      workers: {},
+      openPipelineForm: false,
+      openAddWorker: false,
+      pipelineId: '',
+      selectedWorker: 'none',
+      selectedPipeline: 'none',
+      currentGenerateOption: props.defaultGenerateOption
+    }
+
     this.connection = new StreamConnection();
     this.source = new StreamImageDataSource();
     this.source.setConnection(this.connection, 'stem.size', 'stem.pipeline.executed');
@@ -297,14 +319,31 @@ class PipelineWrapper extends Component<Props> {
     // Reset the the image.
     this.connection.emit('stem.size', {width: 1, height: 1});
     this.connection.socket.emit('stem.pipeline.create', createParams);
+  }
 
+  onSelectGenerateOption(option: ButtonOptions) {
+    this.setState({currentGenerateOption: option});
+  }
+
+  onClickGenerateOption(params: {[name: string]: any}) {
+    switch (this.state.currentGenerateOption) {
+      case ButtonOptions.GenerateImage: {
+        this.generateImage(params);
+        break;
+      }
+      case ButtonOptions.SelectParameters: {
+        this.setState({openPipelineForm: true})
+        break;
+      }
+    }
   }
 
   render() {
-    const { classes, apiKey, render, extraFields } = this.props;
+    const { classes, apiKey, render, extraFields, generateOptions } = this.props;
     const {
       connected, connecting, executing, workers, fieldValues,
-      selectedWorker, selectedPipeline, openPipelineForm, openAddWorker
+      selectedWorker, selectedPipeline, openPipelineForm, openAddWorker,
+      currentGenerateOption
     } = this.state;
 
     const fields = Object.values(extraFields || {}).concat(
@@ -334,20 +373,23 @@ class PipelineWrapper extends Component<Props> {
             onPipelineChange={this.onPipelineChange}
           />
         </div>
-        <Button
-          className={classes.row}
-          variant='contained' color='secondary' disabled={Object.keys(workers).length < 1 || executing}
-          onClick={() => {this.setState({openPipelineForm: true})}}
-        >
-          Generate Image
-        </Button>
+
+        <SplitButton
+          options={generateOptions.reduce((cumulated, option) => {
+            cumulated[option] = ButtonOptionsLabels[option];
+            return cumulated;
+          }, {} as {[key: string]: string})}
+          value={currentGenerateOption}
+          onChange={(value) => {this.onSelectGenerateOption(value as ButtonOptions)}}
+          onClick={() => {this.onClickGenerateOption(values)}}
+        />
+
         {render({
           previewSource: this.source,
           values,
           executing,
           setValues: this.setValues,
           pipeline: selectedPipeline
-
         })}
         <Dialog open={openPipelineForm} onClose={() => {this.setState({openPipelineForm: false})}} title='Generate Image'>
           <FormComponent fields={fields} onChange={this.onFieldChange} values={values} disabled={Object.keys(workers).length < 1} onSubmit={(values) => {this.setState({openPipelineForm: false}); this.generateImage(values)}}/>
