@@ -37,6 +37,7 @@ const styles = (theme: Theme) => createStyles({
 
 export type PipelineCreatedCallback = (pipelineId: string, workerId: string, name: string, parameters: {[name: string]: any}) => void;
 export type PipelineExecutedCallback = (pipelineId: string, workerId: string, rank: number, previewSource: ImageDataSource) => void;
+export type PipelineCompletedCallback = (pipelineId: string, workerId: string, rank: number, previewSource: ImageDataSource) => void;
 
 interface RenderProps {
   previewSource: ImageDataSource;
@@ -54,6 +55,7 @@ interface Props extends WithStyles<typeof styles> {
   extraValues?: {[name: string]: any}
   onCreated?: PipelineCreatedCallback;
   onExecuted?: PipelineExecutedCallback;
+  onCompleted?: PipelineCompletedCallback;
   defaultGenerateOption: ButtonOptions;
   generateOptions: ButtonOptions[];
 }
@@ -142,6 +144,8 @@ class PipelineWrapper extends Component<Props, State> {
     this.connection.subscribe('stem.workers', this.onReceiveWorkers);
     this.onPipelineCreated = this.onPipelineCreated.bind(this);
     this.connection.subscribe('stem.pipeline.created', this.onPipelineCreated);
+    this.onPipelineCompleted = this.onPipelineCompleted.bind(this);
+    this.connection.subscribe('stem.pipeline.completed', this.onPipelineCompleted);
     this.onPipelineExecuted = this.onPipelineExecuted.bind(this);
     this.onWorkerChange = this.onWorkerChange.bind(this);
     this.onPipelineChange = this.onPipelineChange.bind(this);
@@ -165,6 +169,7 @@ class PipelineWrapper extends Component<Props, State> {
   componentWillUnmount() {
     this.connection.unsubscribe('stem.worker', this.onReceiveWorkers);
     this.connection.unsubscribe('stem.pipeline.created', this.onPipelineCreated);
+    this.connection.unsubscribe('stem.pipeline.completed', this.onPipelineCompleted);
     this.source.unsubscribe('stem.pipeline.executed', this.onPipelineExecuted);
   }
 
@@ -280,24 +285,30 @@ class PipelineWrapper extends Component<Props, State> {
   onPipelineExecuted(executedData: PipelineExecutionData) {
     const { pipelineId, rank, workerId } = executedData;
 
-    const deleteParams = {
-      pipelineId,
-    }
-
-    if (rank == 0) {
-      this.setState((state: State) => {
-        state.executing = false;
-        return state;
-      });
-      this.connection.socket.emit('stem.pipeline.delete', deleteParams);
-    }
-
     const { onExecuted } = this.props;
     if (onExecuted) {
       onExecuted(pipelineId, workerId, rank, this.source);
     }
   }
 
+  onPipelineCompleted(completedData: PipelineExecutionData) {
+    const { pipelineId, rank, workerId } = completedData;
+
+    const deleteParams = {
+      pipelineId,
+    }
+
+    this.setState((state: State) => {
+      state.executing = false;
+      return state;
+    });
+    this.connection.socket.emit('stem.pipeline.delete', deleteParams);
+
+    const { onCompleted } = this.props;
+    if (onCompleted) {
+      onCompleted(pipelineId, workerId, rank, this.source);
+    }
+  }
 
   disconnectSocket() {
     this.connection.disconnect();
