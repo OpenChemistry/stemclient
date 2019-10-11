@@ -12,7 +12,7 @@ import STEMImage from '../stem-image';
 import SelectionOverlay from '../selection-overlay';
 import { IImage } from '../../types';
 import { SquareSelection, CircleSelection, calculateDistance, BaseSelection } from '../../stem-image/selection';
-import PipelineWrapper, {PipelineCreatedCallback, PipelineExecutedCallback} from '../pipeline';
+import PipelineWrapper, {PipelineCreatedCallback, PipelineExecutedCallback, PipelineCompletedCallback, ButtonOptions} from '../pipeline';
 import CollapsibleImage from '../collapsible-image';
 
 interface MaskParameters {
@@ -111,24 +111,26 @@ const ImageView: React.FC<Props> = ({
   loggedIn, apiKey
 }) => {
   const [collapsed, setCollapsed] = React.useState({} as {[name: string]: boolean});
-  const [tempSources, setTempSources] = React.useState({} as {[name: string]: ImageDataSource});
+  const [tempSources, setTempSources] = React.useState({} as {[name: string]: StaticImageDataSource});
   const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, parameters: {[name: string]: any}}});
 
   const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, parameters) => {
     setTempMeta({...tempMeta, [pipelineId]: {name, parameters, executed: false}});
   };
 
-  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, rank, previewSource) => {
-    if (rank == 0) {
-      const source = new StaticImageDataSource();
-      source.setImageSize(previewSource.getImageSize());
-      source.setImageData(previewSource.getImageData());
-      setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
+  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+    let source = tempSources[pipelineId];
+    if (!tempSources[pipelineId]) {
+      source = new StaticImageDataSource();
       setTempSources({...tempSources, [pipelineId]: source});
-    } else {
-      setTempSources({...tempSources, [pipelineId]: previewSource});
     }
+    source.setImageSize(previewSource.getImageSize());
+    source.setImageData(previewSource.getImageData());
   };
+
+  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+    setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
+  }
 
   const onDeleteTempImage = (name: string) => {
     const newSources = {...tempSources};
@@ -146,6 +148,9 @@ const ImageView: React.FC<Props> = ({
       extraValues={{imageId: image._id}}
       onCreated={onPipelineCreated}
       onExecuted={onPipelineExecuted}
+      onCompleted={onPipelineCompleted}
+      generateOptions={[ButtonOptions.GenerateImage, ButtonOptions.SelectParameters]}
+      defaultGenerateOption={ButtonOptions.GenerateImage}
       render={({values, setValues, pipeline}) => {
         const {selectionClass, parametersToPositions, positionsToParameters} = getPipelineSelection(pipeline);
         return (

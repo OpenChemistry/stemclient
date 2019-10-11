@@ -8,7 +8,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import InfoIcon from '@material-ui/icons/Info';
 
 import { composeValidators, requiredValidator, FormField } from '../../utils/forms';
-import PipelineWrapper, {PipelineExecutedCallback, PipelineCreatedCallback} from '../pipeline';
+import PipelineWrapper, {PipelineExecutedCallback, PipelineCreatedCallback, PipelineCompletedCallback, ButtonOptions} from '../pipeline';
 import STEMImage from '../stem-image';
 import { ImageDataSource, StaticImageDataSource } from '../../stem-image/data';
 import CollapsibleImage from '../collapsible-image';
@@ -25,24 +25,26 @@ interface Props extends WithStyles<typeof styles> {
 
 const LivePreview : React.FC<Props> = ({loggedIn, apiKey, classes}) => {
   const [collapsed, setCollapsed] = React.useState({} as {[name: string]: boolean});
-  const [tempSources, setTempSources] = React.useState({} as {[name: string]: ImageDataSource});
+  const [tempSources, setTempSources] = React.useState({} as {[name: string]: StaticImageDataSource});
   const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, parameters: {[name: string]: any}}});
 
   const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, parameters) => {
     setTempMeta({...tempMeta, [pipelineId]: {name, parameters, executed: false}});
   };
 
-  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, rank, previewSource) => {
-    if (rank == 0) {
-      const source = new StaticImageDataSource();
-      source.setImageSize(previewSource.getImageSize());
-      source.setImageData(previewSource.getImageData());
-      setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
+  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+    let source = tempSources[pipelineId];
+    if (!tempSources[pipelineId]) {
+      source = new StaticImageDataSource();
       setTempSources({...tempSources, [pipelineId]: source});
-    } else {
-      setTempSources({...tempSources, [pipelineId]: previewSource});
     }
+    source.setImageSize(previewSource.getImageSize());
+    source.setImageData(previewSource.getImageData());
   };
+
+  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, _previewSource) => {
+    setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
+  }
 
   const onDeleteTempImage = (name: string) => {
     const newSources = {...tempSources};
@@ -62,6 +64,9 @@ const LivePreview : React.FC<Props> = ({loggedIn, apiKey, classes}) => {
       }}
       onCreated={onPipelineCreated}
       onExecuted={onPipelineExecuted}
+      onCompleted={onPipelineCompleted}
+      generateOptions={[ButtonOptions.SelectParameters]}
+      defaultGenerateOption={ButtonOptions.SelectParameters}
       render={() => (
         <Fragment>
           {Object.keys(tempMeta).length > 0 &&

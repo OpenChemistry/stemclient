@@ -5,6 +5,7 @@ import { Switch } from 'react-router-dom';
 import { ConnectedRouter } from 'connected-react-router'
 
 import { withStyles, createStyles, WithStyles, Theme, createMuiTheme } from '@material-ui/core/styles';
+import { colors } from '@material-ui/core';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
 import { history } from './store';
@@ -37,24 +38,39 @@ const theme = createMuiTheme({
   }
 })
 
-const styles = (_theme: Theme) => createStyles({
+const styles = (theme: Theme) => createStyles({
   root: {
     width: '100%',
     minHeight: '100%',
     display: 'flex',
     flexDirection: 'column'
   },
-  content: {
+  headerContainer: {
+    zIndex: 10
+  },
+  bodyContainer: {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'row'
+  },
+  navigationContainer: {
+    width: theme.spacing(30),
+    backgroundColor: 'white'
+  },
+  contentContainer: {
     flexGrow:1,
+    paddingTop: theme.spacing(2),
+    width: '100%',
+  },
+  content: {
     position: 'relative',
     width: '100%',
-    maxWidth: '70rem',
+    maxWidth: theme.spacing(140),
     left: '50%',
     transform: 'translateX(-50%)',
-    marginTop: '0.5rem'
   },
-  footer: {
-
+  footerContainer: {
+    height: theme.spacing(10),
   }
 });
 
@@ -68,24 +84,32 @@ const App : React.FC<Props> = (props) => {
   }
   return (
     <ThemeProvider theme={theme}>
+      <ConnectedRouter history={history}>
       <div className={classes.root}>
         <CssBaseline/>
-        <Header/>
-        <ConnectedRouter history={history}>
-          <Navigation/>
-          <div className={classes.content}>
+        <div className={classes.headerContainer}>
+          <Header/>
+        </div>
+        <div className={classes.bodyContainer}>
+          <div className={classes.navigationContainer}>
+            <Navigation/>
+          </div>
+          <div className={classes.contentContainer}>
+            <div className={classes.content}>
             <Switch>
               <PrivateRoute path={`${ROOT_ROUTE}${PREVIEW_ROUTE}`} component={LivePreview} fallback={LoginRequired} exact/>
               <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}/:imageId`} component={ImageView} exact/>
               <PublicRoute path={`${ROOT_ROUTE}${LIST_ROUTE}`} component={ImagesList} exact/>
             </Switch>
+            </div>
           </div>
-        </ConnectedRouter>
+        </div>
         <authUI.LoginOptions girder={development}/>
         <authUI.GirderLogin/>
         <authUI.OauthRedirect/>
         <authUI.NerscLogin/>
       </div>
+      </ConnectedRouter>
     </ThemeProvider>
   );
 }
