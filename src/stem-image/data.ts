@@ -4,6 +4,7 @@ import {
 } from './types';
 import { StreamConnection } from './connection';
 import { MultiSubjectProducer, IObserver } from './subject';
+import { PipelineExecutionData } from './pipelines';
 import { decode } from '@msgpack/msgpack';
 
 export interface ImageDataSource {
@@ -13,13 +14,6 @@ export interface ImageDataSource {
   getPixelData: (i: number, j: number) => number;
   subscribe: (event: ImageSourceEvent, observer: IObserver) => any;
   unsubscribe: (event: ImageSourceEvent, observer: IObserver) => any;
-}
-
-export interface PipelineExecutionData {
-  rank: number,
-  workerId: string,
-  pipelineId: string,
-  result: number[][]
 }
 
 export class BaseImageDataSource extends MultiSubjectProducer {
