@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/Info';
 
 import { ImageDataSource, StaticImageDataSource } from '../../stem-image/data';
 import { Vec2 } from '../../stem-image/types';
-import { Pipelines } from '../../stem-image/pipelines';
+import { PipelineName, PipelineInfo, PipelineIO } from '../../stem-image/pipelines';
 import STEMImage from '../stem-image';
 import SelectionOverlay from '../selection-overlay';
 import { IImage } from '../../types';
@@ -28,7 +28,7 @@ const getPipelineSelection = (pipeline: string) : {
   parametersToPositions?: (parameters: MaskParameters) => Vec2[]
 } => {
   switch(pipeline) {
-    case Pipelines.AnnularMask: {
+    case PipelineName.AnnularMask: {
       return {
         selectionClass: CircleSelection,
         positionsToParameters: (positions: Vec2[]) : MaskParameters => {
@@ -112,13 +112,13 @@ const ImageView: React.FC<Props> = ({
 }) => {
   const [collapsed, setCollapsed] = React.useState({} as {[name: string]: boolean});
   const [tempSources, setTempSources] = React.useState({} as {[name: string]: StaticImageDataSource});
-  const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, parameters: {[name: string]: any}}});
+  const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, info: PipelineInfo, parameters: {[name: string]: any}}});
 
-  const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, parameters) => {
-    setTempMeta({...tempMeta, [pipelineId]: {name, parameters, executed: false}});
+  const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, info, parameters) => {
+    setTempMeta({...tempMeta, [pipelineId]: {name, parameters, info, executed: false}});
   };
 
-  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, _info, previewSource) => {
     let source = tempSources[pipelineId];
     if (!tempSources[pipelineId]) {
       source = new StaticImageDataSource();
@@ -128,7 +128,7 @@ const ImageView: React.FC<Props> = ({
     source.setImageData(previewSource.getImageData());
   };
 
-  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, _info, _previewSource) => {
     setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
   }
 
@@ -160,12 +160,12 @@ const ImageView: React.FC<Props> = ({
             </Typography>
             <Grid container spacing={3}>
               <Grid item xs={6}>
-                {Object.keys(tempMeta).length > 0 &&
+                {Object.keys(tempMeta).filter(pipelineId => tempMeta[pipelineId].info.output === PipelineIO.Image).length > 0 &&
                 <Fragment>
                   <Typography variant="h5" className={classes.title}>
                     Temporary Images
                   </Typography>
-                  {Object.keys(tempMeta).reverse().map((pipelineId) => {
+                  {Object.keys(tempMeta).filter(pipelineId => tempMeta[pipelineId].info.output === PipelineIO.Image).reverse().map((pipelineId) => {
                     const source = tempSources[pipelineId];
                     const {name, parameters, executed} = tempMeta[pipelineId];
                     const title = `${pipelineId.slice(-6)}`
@@ -249,6 +249,57 @@ const ImageView: React.FC<Props> = ({
                 })}
               </Grid>
               <Grid item xs={6}>
+                {Object.keys(tempMeta).filter(pipelineId => tempMeta[pipelineId].info.output === PipelineIO.Frame).length > 0 &&
+                <Fragment>
+                  <Typography variant="h5" className={classes.title}>
+                    Temporary Frames
+                  </Typography>
+                  {Object.keys(tempMeta).filter(pipelineId => tempMeta[pipelineId].info.output === PipelineIO.Frame).reverse().map((pipelineId) => {
+                    const source = tempSources[pipelineId];
+                    const {name, parameters, executed} = tempMeta[pipelineId];
+                    const title = `${pipelineId.slice(-6)}`
+                    const footer = executed ? null : <LinearProgress variant='indeterminate'/>;
+                    const infoTooltip = (
+                      <Fragment>
+                        <Typography key={'pipeline'} variant='body2'>{`pipeline: ${name}`}</Typography>
+                        {Object.entries(parameters).map(([key, value]) => <Typography key={key} variant='body2'>{`${key}: ${value}`}</Typography>)}
+                      </Fragment>
+                    );
+                    const thumbnail = source ? <STEMImage source={source} colors={colors}/> : null;
+                    const image = source
+                      ? <STEMImage source={source} colors={colors}>
+                          <SelectionOverlay source={source} selection={selection} onChange={onSelectionChange} selectionClass={SquareSelection}/>
+                        </STEMImage>
+                      : null;
+                    const actions = [
+                      <Tooltip title={infoTooltip} key="info">
+                        <IconButton size="small">
+                          <InfoIcon/>
+                        </IconButton>
+                      </Tooltip>
+                    ];
+                    if (executed) {
+                      actions.push(
+                        <IconButton onClick={() => {onDeleteTempImage(pipelineId)}} size="small" key="delete">
+                          <DeleteIcon/>
+                        </IconButton>
+                      );
+                    }
+                    return (
+                      <CollapsibleImage
+                        title={title}
+                        footer={footer}
+                        key={pipelineId}
+                        collapsed={collapsed[pipelineId] !== undefined ? collapsed[pipelineId] : false}
+                        onToggle={(collapse)=>{setCollapsed({...collapsed, [pipelineId]: collapse})}}
+                        actions={actions}
+                        thumbnail={thumbnail}
+                        image={image}
+                      />
+                    )
+                  })}
+                </Fragment>
+                }
                 <Typography variant="h5" className={classes.title}>
                   Selected Frames
                 </Typography>

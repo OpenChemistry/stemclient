@@ -12,6 +12,7 @@ import PipelineWrapper, {PipelineExecutedCallback, PipelineCreatedCallback, Pipe
 import STEMImage from '../stem-image';
 import { ImageDataSource, StaticImageDataSource } from '../../stem-image/data';
 import CollapsibleImage from '../collapsible-image';
+import { PipelineInfo } from '../../stem-image/pipelines';
 
 const styles = (theme: Theme) => createStyles({
   title: {
@@ -26,13 +27,13 @@ interface Props extends WithStyles<typeof styles> {
 const LivePreview : React.FC<Props> = ({loggedIn, apiKey, classes}) => {
   const [collapsed, setCollapsed] = React.useState({} as {[name: string]: boolean});
   const [tempSources, setTempSources] = React.useState({} as {[name: string]: StaticImageDataSource});
-  const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, parameters: {[name: string]: any}}});
+  const [tempMeta, setTempMeta] = React.useState({} as {[name: string]: {name: string, executed: boolean, info: PipelineInfo, parameters: {[name: string]: any}}});
 
-  const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, parameters) => {
-    setTempMeta({...tempMeta, [pipelineId]: {name, parameters, executed: false}});
+  const onPipelineCreated : PipelineCreatedCallback = (pipelineId, _workerId, name, info, parameters) => {
+    setTempMeta({...tempMeta, [pipelineId]: {name, parameters, info, executed: false}});
   };
 
-  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, previewSource) => {
+  const onPipelineExecuted : PipelineExecutedCallback = (pipelineId, _workerId, _rank, _info, previewSource) => {
     let source = tempSources[pipelineId];
     if (!tempSources[pipelineId]) {
       source = new StaticImageDataSource();
@@ -42,7 +43,7 @@ const LivePreview : React.FC<Props> = ({loggedIn, apiKey, classes}) => {
     source.setImageData(previewSource.getImageData());
   };
 
-  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, _previewSource) => {
+  const onPipelineCompleted : PipelineCompletedCallback = (pipelineId, _workerId, _rank, _info, _previewSource) => {
     setTempMeta({...tempMeta, [pipelineId]: {...tempMeta[pipelineId], executed: true}});
   }
 

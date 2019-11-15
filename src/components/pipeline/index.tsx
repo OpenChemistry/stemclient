@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { createStyles, withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 
-import { StreamImageDataSource, ImageDataSource, PipelineExecutionData } from '../../stem-image/data';
+import { StreamImageDataSource, ImageDataSource } from '../../stem-image/data';
 import { StreamConnection } from '../../stem-image/connection';
+import { PipelineInfo, PipelineCreationData, PipelineExecutionData, PipelineName } from '../../stem-image/pipelines';
 import FormComponent from './form';
 import { makeFormFields, ServerField, FormField } from '../../utils/forms';
 import StatusBar from './status';
@@ -35,9 +36,9 @@ const styles = (theme: Theme) => createStyles({
   }
 });
 
-export type PipelineCreatedCallback = (pipelineId: string, workerId: string, name: string, parameters: {[name: string]: any}) => void;
-export type PipelineExecutedCallback = (pipelineId: string, workerId: string, rank: number, previewSource: ImageDataSource) => void;
-export type PipelineCompletedCallback = (pipelineId: string, workerId: string, rank: number, previewSource: ImageDataSource) => void;
+export type PipelineCreatedCallback = (pipelineId: string, workerId: string, name: string, pipelineInfo: PipelineInfo, parameters: {[name: string]: any}) => void;
+export type PipelineExecutedCallback = (pipelineId: string, workerId: string, rank: number, pipelineInfo: PipelineInfo, previewSource: ImageDataSource) => void;
+export type PipelineCompletedCallback = (pipelineId: string, workerId: string, rank: number, pipelineInfo: PipelineInfo, previewSource: ImageDataSource) => void;
 
 interface RenderProps {
   previewSource: ImageDataSource;
@@ -74,15 +75,8 @@ interface State {
   currentGenerateOption: ButtonOptions;
 }
 
-interface Pipeline {
-  name: string;
-  description: string;
-  displayName: string;
-  parameters: {[name: string]: ServerField};
-}
-
 interface Worker {
-  pipelines: {[pipelineName: string]: Pipeline};
+  pipelines: {[pipelineName: string]: PipelineInfo};
   ranks: {[rank: number]: string};
 }
 
@@ -99,13 +93,6 @@ const pipelineParameters = (workers: Workers, workerId: string, pipelineName: st
     return {};
   }
   return worker.pipelines[pipelineName].parameters;
-}
-
-interface PipelineCreatedReply {
-  id: string,
-  name: string,
-  pipelineId: string;
-  workerId: string
 }
 
 class PipelineWrapper extends Component<Props, State> {
@@ -260,9 +247,9 @@ class PipelineWrapper extends Component<Props, State> {
     this.setState({openAddWorker: true});
   }
 
-  onPipelineCreated(pipeline: PipelineCreatedReply) {
+  onPipelineCreated(pipeline: PipelineCreationData) {
     const { extraValues } = this.props;
-    const { pipelineId, workerId, name } = pipeline;
+    const { pipelineId, workerId, name, info } = pipeline;
     const executeParams = {
       pipelineId,
       workerId,
@@ -278,21 +265,21 @@ class PipelineWrapper extends Component<Props, State> {
 
     const { onCreated } = this.props;
     if (onCreated) {
-      onCreated(pipelineId, workerId, name, {...this.state.fieldValues});
+      onCreated(pipelineId, workerId, name, info, {...this.state.fieldValues});
     }
   }
 
   onPipelineExecuted(executedData: PipelineExecutionData) {
-    const { pipelineId, rank, workerId } = executedData;
+    const { pipelineId, rank, workerId, info } = executedData;
 
     const { onExecuted } = this.props;
     if (onExecuted) {
-      onExecuted(pipelineId, workerId, rank, this.source);
+      onExecuted(pipelineId, workerId, rank, info, this.source);
     }
   }
 
   onPipelineCompleted(completedData: PipelineExecutionData) {
-    const { pipelineId, rank, workerId } = completedData;
+    const { pipelineId, rank, workerId, info } = completedData;
 
     const deleteParams = {
       pipelineId,
@@ -306,7 +293,7 @@ class PipelineWrapper extends Component<Props, State> {
 
     const { onCompleted } = this.props;
     if (onCompleted) {
-      onCompleted(pipelineId, workerId, rank, this.source);
+      onCompleted(pipelineId, workerId, rank, info, this.source);
     }
   }
 
