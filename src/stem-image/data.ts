@@ -5,6 +5,7 @@ import {
 import { StreamConnection } from './connection';
 import { MultiSubjectProducer, IObserver } from './subject';
 import { PipelineExecutionData } from './pipelines';
+import { AggregationFunction, SumAggregation } from './aggregation';
 import { decode } from '@msgpack/msgpack';
 
 export interface ImageDataSource {
@@ -98,6 +99,7 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
   private connection: StreamConnection | null = null;
   private sizeEvent: string = "";
   private dataEvent: string = "";
+  private aggregationFn: AggregationFunction = SumAggregation;
 
   constructor() {
     super();
@@ -112,6 +114,10 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
     this.dataEvent = dataEvent;
     this.connection.subscribe(this.sizeEvent, this.sizeObserver);
     this.connection.subscribe(this.dataEvent, this.dataObserver);
+  }
+
+  setAggregationFunction(fn: AggregationFunction) {
+    this.aggregationFn = fn;
   }
 
   resetConnection() {
@@ -153,11 +159,8 @@ export class StreamImageDataSource extends BaseImageDataSource implements ImageD
   }
 
   private updateImageChunk(values: Float64Array) {
-    const {width, height} = this.size;
-    const n = width * height;
-
     for(let i = 0; i < values.length; ++i) {
-        this.data[i] += values[i];
+        this.data[i] = this.aggregationFn(this.data[i], values[i]);
     }
 
     this.updateRange();

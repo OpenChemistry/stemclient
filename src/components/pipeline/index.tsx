@@ -10,6 +10,7 @@ import StatusBar from './status';
 import Dialog from './dialog';
 import AddWorker from './add-worker';
 import SplitButton from '../split-button';
+import { getAggregationFunction } from '../../stem-image/aggregation';
 
 export enum ButtonOptions {
   GenerateImage = "generate-image",
@@ -250,6 +251,10 @@ class PipelineWrapper extends Component<Props, State> {
   onPipelineCreated(pipeline: PipelineCreationData) {
     const { extraValues } = this.props;
     const { pipelineId, workerId, name, info } = pipeline;
+
+    const aggregationFn = getAggregationFunction(info.aggregation);
+    this.source.setAggregationFunction(aggregationFn);
+
     const executeParams = {
       pipelineId,
       workerId,
