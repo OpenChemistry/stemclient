@@ -5,7 +5,9 @@ export interface PipelineInfo {
   description: string;
   displayName: string;
   parameters: {[name: string]: ServerField};
-  output: PipelineIO
+  input: PipelineIO;
+  output: PipelineIO;
+  aggregation: PipelineAggregation;
 }
 
 export interface PipelineCreationData {
@@ -25,10 +27,17 @@ export interface PipelineExecutionData {
 }
 
 export enum PipelineName {
-  AnnularMask = 'annular'
+  AnnularMask = 'annular',
+  MaximumDiffraction = 'maximum_diffraction'
 }
 
 export enum PipelineIO {
   Image = 'image',
   Frame = 'frame'
+}
+
+export enum PipelineAggregation {
+  Sum = 'sum',
+  Max = 'max',
+  Min = 'min'
 }
